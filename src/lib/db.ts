@@ -170,12 +170,12 @@ export function closeDb(): void {
 export function getTasksByArea(): AreaWithTasks[] {
   const db = getDb();
   const areasStmt = db.prepare("SELECT id, name, display_order FROM areas ORDER BY display_order ASC");
-  const areasRows = areasStmt.all() as { id: number; name: string; display_order: number }[];
+  const areasRows = areasStmt.all() as unknown as { id: number; name: string; display_order: number }[];
 
   const tasksStmt = db.prepare(
     "SELECT id, area_id, text, display_order, active FROM tasks WHERE active = 1 ORDER BY display_order ASC"
   );
-  const tasksRows = tasksStmt.all() as {
+  const tasksRows = tasksStmt.all() as unknown as {
     id: number;
     area_id: number;
     text: string;
@@ -219,13 +219,13 @@ export function getOrCreateDailyData(dateStr: string): DailyData {
   // 2. Ensure daily_assignments exist (copied from weekly_schedule if missing)
   const areas = getTasksByArea();
   const assignStmt = db.prepare("SELECT area_id, assignee FROM daily_assignments WHERE date = ?");
-  let assignRows = assignStmt.all(dateStr) as { area_id: number; assignee: string }[];
+  let assignRows = assignStmt.all(dateStr) as unknown as { area_id: number; assignee: string }[];
 
   if (assignRows.length === 0) {
     const weeklyStmt = db.prepare(
       "SELECT area_id, assignee FROM weekly_schedule WHERE day_of_week = ?"
     );
-    const weeklyRows = weeklyStmt.all(dayOfWeek) as { area_id: number; assignee: string }[];
+    const weeklyRows = weeklyStmt.all(dayOfWeek) as unknown as { area_id: number; assignee: string }[];
     const insertAssign = db.prepare(
       "INSERT OR IGNORE INTO daily_assignments (date, area_id, assignee) VALUES (?, ?, ?)"
     );
@@ -236,12 +236,12 @@ export function getOrCreateDailyData(dateStr: string): DailyData {
       insertAssign.run(dateStr, area.id, assigneeName);
     }
 
-    assignRows = assignStmt.all(dateStr) as { area_id: number; assignee: string }[];
+    assignRows = assignStmt.all(dateStr) as unknown as { area_id: number; assignee: string }[];
   }
 
   // 3. Ensure daily_task_checks exist
   const checksStmt = db.prepare("SELECT task_id, completed FROM daily_task_checks WHERE date = ?");
-  let checkRows = checksStmt.all(dateStr) as { task_id: number; completed: number }[];
+  let checkRows = checksStmt.all(dateStr) as unknown as { task_id: number; completed: number }[];
 
   const existingTaskIds = new Set(checkRows.map((c) => c.task_id));
   const insertCheck = db.prepare(
@@ -304,7 +304,7 @@ export function checkAllTasks(dateStr: string, areaId: number, completed: boolea
   getOrCreateDailyData(dateStr);
 
   const tasksStmt = db.prepare("SELECT id FROM tasks WHERE area_id = ? AND active = 1");
-  const taskRows = tasksStmt.all(areaId) as { id: number }[];
+  const taskRows = tasksStmt.all(areaId) as unknown as { id: number }[];
 
   const updateStmt = db.prepare(`
     INSERT INTO daily_task_checks (date, task_id, completed)
@@ -345,7 +345,7 @@ export function getWeeklySchedule(): WeeklyScheduleItem[] {
   const stmt = db.prepare(
     "SELECT id, day_of_week as dayOfWeek, area_id as areaId, assignee FROM weekly_schedule ORDER BY day_of_week ASC, area_id ASC"
   );
-  return stmt.all() as WeeklyScheduleItem[];
+  return stmt.all() as unknown as WeeklyScheduleItem[];
 }
 
 export function updateWeeklySchedule(schedule: { dayOfWeek: number; areaId: number; assignee: string }[]): void {
@@ -384,7 +384,7 @@ export function deleteTask(taskId: number): void {
 
 export function getSettings(): Record<string, string> {
   const db = getDb();
-  const rows = db.prepare("SELECT key, value FROM settings").all() as { key: string; value: string }[];
+  const rows = db.prepare("SELECT key, value FROM settings").all() as unknown as { key: string; value: string }[];
   const settings: Record<string, string> = {};
   for (const r of rows) {
     settings[r.key] = r.value;
@@ -405,7 +405,7 @@ export function getDailyReportsHistory(limit: number = 30): { date: string; isSe
   const db = getDb();
   const rows = db.prepare(
     "SELECT date, is_sent, sent_at FROM daily_reports ORDER BY date DESC LIMIT ?"
-  ).all(limit) as { date: string; is_sent: number; sent_at: string | null }[];
+  ).all(limit) as unknown as { date: string; is_sent: number; sent_at: string | null }[];
 
   return rows.map((r) => ({
     date: r.date,
