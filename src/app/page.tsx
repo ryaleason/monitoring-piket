@@ -172,7 +172,7 @@ export default function HomePage() {
       setToastMessage(
         toArea === 1
           ? `${name} pindah membantu di Dapur`
-          : `${name} dipindahkan ke Asrama`
+          : `${name} pindah membantu di Asrama`
       );
       setToastType("success");
       return updated;
@@ -415,8 +415,10 @@ export default function HomePage() {
                 // If a guest (e.g. Andi) is in Dapur, onReturnPerson returns him to Asrama
                 onReturnPerson = (name: string) => handleRemoveHelper(name, 1);
 
-                // Dapur host stays in Dapur; only helpers from Asrama move here
-                canTransferToOtherArea = false;
+                // Default santri in Dapur (e.g. Gabrial) can also transfer to help Asrama
+                canTransferToOtherArea = true;
+                transferActionLabel = "Bantu Asrama";
+                onTransferPerson = (name: string) => handleAddHelper(name, 2);
               } else if (area.id === 2) {
                 // Area 2: Lobby & Asrama
                 assigneeItems = dayRoster.lobby.map((name) => ({
