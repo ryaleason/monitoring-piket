@@ -17,7 +17,7 @@ import {
   formatSantriNames,
   transferSantri,
 } from "@/lib/schedule";
-import { Copy, Check, Send, MessageSquare, Calendar } from "lucide-react";
+import { Copy, Check, Send, Calendar } from "lucide-react";
 
 interface DayItem {
   index: number;
@@ -453,20 +453,6 @@ export default function HomePage() {
               />
             );
           })}
-        </div>
-
-        {/* WhatsApp Preview Card */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-2.5 shadow-2xs">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-blue-950 flex items-center gap-1.5">
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
-              <span>Format Pesan Grup WhatsApp</span>
-            </span>
-            <span className="text-[11px] text-slate-500">Otomatis siap kirim</span>
-          </div>
-          <div className="bg-[#efeae2]/50 p-3 rounded-xl border border-slate-200/70 text-slate-800 text-[11px] font-mono leading-relaxed whitespace-pre-wrap select-all">
-            {formattedReport}
-          </div>
         </div>
       </main>
 
