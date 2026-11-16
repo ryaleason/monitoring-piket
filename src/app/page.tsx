@@ -343,7 +343,7 @@ export default function HomePage() {
               <span className="text-slate-600 font-medium">Jadwal:</span>
               <span className="font-bold text-blue-950">{selectedDayName}</span>
               {isSelectedToday && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+                <span className="text-[10px] font-semibold px-2 py-0.5  text-slate-400 rounded-full">
                   Hari Ini
                 </span>
               )}
