@@ -13,6 +13,9 @@ import {
   FIXED_DAILY_SCHEDULE,
   DEFAULT_PIKET_AREAS,
   AreaDefinition,
+  parseSantriNames,
+  formatSantriNames,
+  transferSantri,
 } from "@/lib/schedule";
 import { Copy, Check, CheckCheck, FileText, CalendarDays, Send } from "lucide-react";
 
@@ -44,8 +47,17 @@ export default function HomePage() {
     dateString: "",
   });
 
-  // Assignees override state per area: { 1: "...", 2: "...", 3: "..." }
-  const [customAssignees, setCustomAssignees] = useState<Record<number, string>>({});
+  // Dynamic Dapur & Asrama/Lobby santri roster
+  const [dayRoster, setDayRoster] = useState<{
+    dapur: string[];
+    lobby: string[];
+  }>({
+    dapur: ["Akyas"],
+    lobby: ["Andi", "Ega"],
+  });
+
+  // Optional manual override for Musala (Area 3 is fixed by default)
+  const [customMusalaAssignee, setCustomMusalaAssignee] = useState<string | null>(null);
 
   // Checklist state: { [taskId]: boolean }
   const [taskChecks, setTaskChecks] = useState<Record<string, boolean>>({});
@@ -78,6 +90,17 @@ export default function HomePage() {
     });
     setSelectedDayIndex(jakarta.dayIndex);
 
+    // Initialize roster for today
+    const schedule = FIXED_DAILY_SCHEDULE[jakarta.dayIndex] || {
+      dapur: "Akyas",
+      lobby: "Andi & Ega",
+      musala: "Yasir & Hanif",
+    };
+    setDayRoster({
+      dapur: parseSantriNames(schedule.dapur),
+      lobby: parseSantriNames(schedule.lobby),
+    });
+
     // Load saved checks for today from localStorage
     try {
       const savedChecks = localStorage.getItem(`piket_checks_${jakarta.dateString}`);
@@ -100,21 +123,83 @@ export default function HomePage() {
     );
   }, [selectedDayIndex]);
 
+  // Default lists for comparison
+  const defaultDapurList = useMemo(
+    () => parseSantriNames(defaultSchedule.dapur),
+    [defaultSchedule]
+  );
+  const defaultLobbyList = useMemo(
+    () => parseSantriNames(defaultSchedule.lobby),
+    [defaultSchedule]
+  );
+
+  // Check if roster has been modified from the default
+  const isRosterModified = useMemo(() => {
+    return (
+      JSON.stringify(dayRoster.dapur) !== JSON.stringify(defaultDapurList) ||
+      JSON.stringify(dayRoster.lobby) !== JSON.stringify(defaultLobbyList) ||
+      customMusalaAssignee !== null
+    );
+  }, [dayRoster, defaultDapurList, defaultLobbyList, customMusalaAssignee]);
+
   // Determine effective assignee per area
   const getAssigneeForArea = (areaId: number): string => {
-    if (customAssignees[areaId] !== undefined) {
-      return customAssignees[areaId];
-    }
-    if (areaId === 1) return defaultSchedule.dapur;
-    if (areaId === 2) return defaultSchedule.lobby;
-    if (areaId === 3) return defaultSchedule.musala;
+    if (areaId === 1) return formatSantriNames(dayRoster.dapur);
+    if (areaId === 2) return formatSantriNames(dayRoster.lobby);
+    if (areaId === 3) return customMusalaAssignee ?? defaultSchedule.musala;
     return "";
   };
 
   // Reset custom assignees when user switches day
   const handleSelectDay = (dayIndex: number) => {
     setSelectedDayIndex(dayIndex);
-    setCustomAssignees({});
+    const schedule = FIXED_DAILY_SCHEDULE[dayIndex] || {
+      dapur: "Petugas Dapur",
+      lobby: "Petugas Lobby",
+      musala: "Petugas Musala",
+    };
+    setDayRoster({
+      dapur: parseSantriNames(schedule.dapur),
+      lobby: parseSantriNames(schedule.lobby),
+    });
+    setCustomMusalaAssignee(null);
+  };
+
+  // 1-Tap Move Santri between Dapur and Asrama
+  const handleAddHelper = (name: string, toArea: 1 | 2) => {
+    setDayRoster((prev) => {
+      const updated = transferSantri(prev, name, toArea === 1 ? "dapur" : "lobby");
+      setToastMessage(
+        toArea === 1
+          ? `${name} ditambahkan membantu di Dapur`
+          : `${name} dipindahkan ke Asrama`
+      );
+      setToastType("success");
+      return updated;
+    });
+  };
+
+  const handleRemoveHelper = (name: string, fromArea: 1 | 2) => {
+    setDayRoster((prev) => {
+      const updated = transferSantri(prev, name, fromArea === 1 ? "lobby" : "dapur");
+      setToastMessage(
+        fromArea === 1
+          ? `${name} dikembalikan ke Asrama`
+          : `${name} dikembalikan ke Dapur`
+      );
+      setToastType("success");
+      return updated;
+    });
+  };
+
+  const handleResetRoster = () => {
+    setDayRoster({
+      dapur: [...defaultDapurList],
+      lobby: [...defaultLobbyList],
+    });
+    setCustomMusalaAssignee(null);
+    setToastMessage("Jadwal petugas dikembalikan ke jadwal resmi");
+    setToastType("success");
   };
 
   // Toggle single task check
@@ -170,12 +255,21 @@ export default function HomePage() {
     });
   };
 
-  // Save modified assignee
+  // Save modified assignee from manual modal
   const handleSaveAssignee = (newAssignee: string) => {
-    setCustomAssignees((prev) => ({
-      ...prev,
-      [editModal.areaNumber]: newAssignee,
-    }));
+    if (editModal.areaNumber === 1) {
+      setDayRoster((prev) => ({
+        ...prev,
+        dapur: parseSantriNames(newAssignee),
+      }));
+    } else if (editModal.areaNumber === 2) {
+      setDayRoster((prev) => ({
+        ...prev,
+        lobby: parseSantriNames(newAssignee),
+      }));
+    } else if (editModal.areaNumber === 3) {
+      setCustomMusalaAssignee(newAssignee);
+    }
     setToastMessage(`Petugas Area ${editModal.areaNumber} diperbarui`);
     setToastType("success");
   };
@@ -193,7 +287,7 @@ export default function HomePage() {
     }));
 
     return formatDailyReport(areasReportData);
-  }, [customAssignees, defaultSchedule, taskChecks]);
+  }, [dayRoster, defaultSchedule, customMusalaAssignee, taskChecks]);
 
   // Redirection to WhatsApp
   const handleSendToWhatsApp = async () => {
@@ -310,12 +404,52 @@ export default function HomePage() {
             }));
             const currentAssignee = getAssigneeForArea(area.id);
 
+            // Configure dynamic helper switching:
+            // Area 1 (Dapur): can pull helpers from Lobby
+            // Area 2 (Lobby & Asrama): can pull helpers from Dapur
+            // Area 3 (Musala): user specified "kalau mushola pasti fix"
+            let assigneeList: string[] | undefined;
+            let defaultAssigneeList: string[] | undefined;
+            let availableHelpers: string[] | undefined;
+            let onAddHelper: ((name: string) => void) | undefined;
+            let onRemoveHelper: ((name: string) => void) | undefined;
+
+            const isSunday = selectedDayIndex === 0;
+
+            if (!isSunday) {
+              if (area.id === 1) {
+                assigneeList = dayRoster.dapur;
+                defaultAssigneeList = defaultDapurList;
+                availableHelpers = dayRoster.lobby;
+                onAddHelper = (name: string) => handleAddHelper(name, 1);
+                // Allow removing if more than 1 or if different from default
+                if (dayRoster.dapur.length > 1 || !defaultDapurList.includes(dayRoster.dapur[0])) {
+                  onRemoveHelper = (name: string) => handleRemoveHelper(name, 1);
+                }
+              } else if (area.id === 2) {
+                assigneeList = dayRoster.lobby;
+                defaultAssigneeList = defaultLobbyList;
+                availableHelpers = dayRoster.dapur;
+                onAddHelper = (name: string) => handleAddHelper(name, 2);
+                if (dayRoster.lobby.length > 1 || !defaultLobbyList.includes(dayRoster.lobby[0])) {
+                  onRemoveHelper = (name: string) => handleRemoveHelper(name, 2);
+                }
+              }
+            }
+
             return (
               <AreaCard
                 key={area.id}
                 areaNumber={area.id}
                 areaName={area.name}
                 assignee={currentAssignee}
+                assigneeList={assigneeList}
+                defaultAssigneeList={defaultAssigneeList}
+                availableHelpers={availableHelpers}
+                onAddHelper={onAddHelper}
+                onRemoveHelper={onRemoveHelper}
+                onResetAssignee={handleResetRoster}
+                isModified={isRosterModified}
                 tasks={areaTasks}
                 onToggleTask={handleToggleTask}
                 onCheckAll={(completed) => handleCheckAllArea(area, completed)}

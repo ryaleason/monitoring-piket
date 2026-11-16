@@ -54,6 +54,61 @@ export const FIXED_DAILY_SCHEDULE: Record<number, DayPiketSchedule> = {
   },
 };
 
+/**
+ * Memecah string daftar nama santri menjadi array nama.
+ * Contoh: "Andi & Ega" -> ["Andi", "Ega"]
+ *         "Gabrial, Izal & Arman" -> ["Gabrial", "Izal", "Arman"]
+ */
+export function parseSantriNames(text: string): string[] {
+  if (!text || text.trim() === "") return [];
+  if (text.trim() === "Semua Santri") return ["Semua Santri"];
+  return text
+    .split(/[,&]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Menggabungkan array nama santri menjadi format bahasa Indonesia natural.
+ * Contoh: ["Akyas"] -> "Akyas"
+ *         ["Akyas", "Andi"] -> "Akyas & Andi"
+ *         ["Akyas", "Andi", "Ega"] -> "Akyas, Andi & Ega"
+ */
+export function formatSantriNames(names: string[]): string {
+  if (!names || names.length === 0) return "Belum ditentukan";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} & ${names[1]}`;
+  const last = names[names.length - 1];
+  const rest = names.slice(0, -1).join(", ");
+  return `${rest} & ${last}`;
+}
+
+/**
+ * Memindahkan santri antara Dapur (Area 1) dan Asrama/Lobby (Area 2).
+ */
+export function transferSantri(
+  current: { dapur: string[]; lobby: string[] },
+  name: string,
+  toArea: "dapur" | "lobby"
+): { dapur: string[]; lobby: string[] } {
+  let newDapur = [...current.dapur];
+  let newLobby = [...current.lobby];
+
+  if (toArea === "dapur") {
+    newLobby = newLobby.filter((n) => n !== name);
+    if (!newDapur.includes(name)) {
+      newDapur.push(name);
+    }
+  } else {
+    newDapur = newDapur.filter((n) => n !== name);
+    if (!newLobby.includes(name)) {
+      newLobby.push(name);
+    }
+  }
+
+  return { dapur: newDapur, lobby: newLobby };
+}
+
 export interface TaskDefinition {
   id: string;
   text: string;
