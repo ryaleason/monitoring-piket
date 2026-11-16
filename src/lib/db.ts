@@ -36,7 +36,11 @@ export interface WeeklyScheduleItem {
   assignee: string;
 }
 
-export function initDb(dbPath: string = process.env.DATABASE_PATH || "./data/piket.db"): DatabaseSync {
+const DEFAULT_DB_PATH =
+  process.env.DATABASE_PATH ||
+  (process.env.VERCEL ? "/tmp/piket.db" : "./data/piket.db");
+
+export function initDb(dbPath: string = DEFAULT_DB_PATH): DatabaseSync {
   if (activeDb) {
     return activeDb;
   }
