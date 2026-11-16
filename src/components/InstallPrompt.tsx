@@ -78,10 +78,10 @@ export function InstallPrompt() {
 
   return (
     <>
-      <div className="bg-slate-900 text-white rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3 shadow-xs">
+      <div className="bg-blue-900 text-white rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-2.5 min-w-0">
-          <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
-          <p className="text-xs font-medium truncate">
+          <Smartphone className="w-4 h-4 text-blue-200 shrink-0" />
+          <p className="text-xs font-medium text-blue-50 truncate">
             Pasang di Layar Utama HP untuk akses cepat
           </p>
         </div>
@@ -89,13 +89,13 @@ export function InstallPrompt() {
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={handleInstallClick}
-            className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-lg text-xs transition-colors touch-target min-h-0"
+            className="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-950 font-bold rounded-lg text-xs transition-colors touch-target min-h-0"
           >
             Install
           </button>
           <button
             onClick={handleDismiss}
-            className="p-1 text-slate-400 hover:text-white rounded-md touch-target min-h-0 min-w-0"
+            className="p-1 text-blue-300 hover:text-white rounded-md touch-target min-h-0 min-w-0"
             aria-label="Tutup saran instalasi"
           >
             <X className="w-3.5 h-3.5" />
@@ -121,23 +121,23 @@ export function InstallPrompt() {
 
             <ol className="text-xs text-slate-700 space-y-3 font-medium">
               <li className="flex items-start gap-2.5">
-                <span className="w-5 h-5 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+                <span className="w-5 h-5 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
                   1
                 </span>
                 <span>
-                  Tekan tombol <strong>Share</strong> (ikon kotak dengan panah atas <Share2 className="w-3.5 h-3.5 inline text-slate-700" />) di bilah bawah Safari.
+                  Tekan tombol <strong>Share</strong> (ikon kotak dengan panah atas <Share2 className="w-3.5 h-3.5 inline text-blue-600" />) di bilah bawah Safari.
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
-                <span className="w-5 h-5 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+                <span className="w-5 h-5 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
                   2
                 </span>
                 <span>
-                  Pilih <strong>Tambahkan ke Layar Utama</strong> (Add to Home Screen <PlusSquare className="w-3.5 h-3.5 inline text-slate-700" />).
+                  Pilih <strong>Tambahkan ke Layar Utama</strong> (Add to Home Screen <PlusSquare className="w-3.5 h-3.5 inline text-blue-600" />).
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
-                <span className="w-5 h-5 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+                <span className="w-5 h-5 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
                   3
                 </span>
                 <span>
@@ -148,7 +148,7 @@ export function InstallPrompt() {
 
             <button
               onClick={() => setShowIosGuide(false)}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs touch-target"
+              className="w-full py-2.5 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-xl text-xs touch-target"
             >
               Saya Mengerti
             </button>

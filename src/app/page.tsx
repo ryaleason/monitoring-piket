@@ -334,29 +334,29 @@ export default function HomePage() {
         {/* Compact PWA Install Banner */}
         <InstallPrompt />
 
-        {/* Day Selector (Artisanal Calendar Strip) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-3 space-y-2.5 shadow-2xs">
+        {/* Day Selector (Artisanal Calendar Strip in Royal Blue) */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-3 space-y-2.5 shadow-2xs">
           <div className="flex items-center justify-between px-1 text-xs">
             <div className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <Calendar className="w-3.5 h-3.5 text-blue-600" />
               <span className="text-slate-600 font-medium">Jadwal:</span>
-              <span className="font-bold text-slate-900">{selectedDayName}</span>
+              <span className="font-bold text-blue-950">{selectedDayName}</span>
               {isSelectedToday && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full">
+                <span className="text-[10px] font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
                   Hari Ini
                 </span>
               )}
             </div>
             <button
               onClick={() => handleCheckAllGlobal(!allGlobalCompleted)}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-900 active:text-slate-950 transition-colors"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 active:text-blue-900 transition-colors"
             >
               {allGlobalCompleted ? "Batal Semua" : "Centang Semua"}
             </button>
           </div>
 
           {/* 7 Columns Minimalist Strip */}
-          <div className="grid grid-cols-7 gap-1 bg-slate-100/70 p-1 rounded-xl">
+          <div className="grid grid-cols-7 gap-1 bg-blue-50/60 p-1 rounded-xl">
             {DAYS_LIST.map((d) => {
               const isSelected = selectedDayIndex === d.index;
               const isToday = dateInfo.dayIndex === d.index;
@@ -366,10 +366,10 @@ export default function HomePage() {
                   onClick={() => handleSelectDay(d.index)}
                   className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs transition-all touch-target min-h-[44px] ${
                     isSelected
-                      ? "bg-slate-900 text-white font-bold shadow-xs"
+                      ? "bg-blue-600 text-white font-bold shadow-xs"
                       : isToday
-                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                      ? "bg-white text-blue-900 font-semibold shadow-2xs border border-blue-200/80"
+                      : "text-slate-600 hover:text-blue-700 hover:bg-white/60"
                   }`}
                   aria-label={`Jadwal hari ${d.name}`}
                 >
@@ -377,7 +377,7 @@ export default function HomePage() {
                   {isToday && (
                     <span
                       className={`w-1 h-1 rounded-full mt-0.5 ${
-                        isSelected ? "bg-white" : "bg-emerald-600"
+                        isSelected ? "bg-white" : "bg-blue-600"
                       }`}
                     />
                   )}
@@ -455,14 +455,14 @@ export default function HomePage() {
           })}
         </div>
 
-        {/* WhatsApp Preview Card (Authentic Memo Look) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 space-y-2.5 shadow-2xs">
+        {/* WhatsApp Preview Card */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-2.5 shadow-2xs">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-900 flex items-center gap-1.5">
+            <span className="font-bold text-blue-950 flex items-center gap-1.5">
               <MessageSquare className="w-4 h-4 text-emerald-600" />
               <span>Format Pesan Grup WhatsApp</span>
             </span>
-            <span className="text-[11px] text-slate-600">Otomatis siap kirim</span>
+            <span className="text-[11px] text-slate-500">Otomatis siap kirim</span>
           </div>
           <div className="bg-[#efeae2]/50 p-3 rounded-xl border border-slate-200/70 text-slate-800 text-[11px] font-mono leading-relaxed whitespace-pre-wrap select-all">
             {formattedReport}
@@ -470,13 +470,13 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Sticky Bottom Actions Bar (Clean & Docked) */}
+      {/* Sticky Bottom Actions Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-lg">
         <div className="max-w-xl mx-auto flex flex-col gap-2">
           {/* Progress Indicator */}
           <div className="flex items-center justify-between text-xs px-0.5">
             <span className="text-slate-600 font-medium">
-              Progres Selesai: <strong className="text-slate-900">{completedCount}/{totalTasks}</strong> ({percent}%)
+              Progres Selesai: <strong className="text-blue-950">{completedCount}/{totalTasks}</strong> ({percent}%)
             </span>
             <div className="w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
               <div
@@ -490,7 +490,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyOnly}
-              className="py-3 px-4 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 transition-colors flex items-center justify-center gap-1.5 shrink-0 touch-target"
+              className="py-3 px-4 rounded-xl font-bold text-xs bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-900 border border-blue-200/80 transition-colors flex items-center justify-center gap-1.5 shrink-0 touch-target"
               title="Salin format laporan ke clipboard"
             >
               {copiedRecently ? (
@@ -500,7 +500,7 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-slate-600" />
+                  <Copy className="w-4 h-4 text-blue-700" />
                   <span>Salin Teks</span>
                 </>
               )}
