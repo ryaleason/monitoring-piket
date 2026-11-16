@@ -2,42 +2,53 @@
 
 import React from "react";
 import { Check, CheckCheck, Edit2 } from "lucide-react";
-import { AreaWithTasks } from "@/lib/db";
+
+export interface TaskState {
+  id: string;
+  text: string;
+  completed: boolean;
+}
 
 interface AreaCardProps {
-  area: AreaWithTasks;
-  onToggleTask: (taskId: number, currentCompleted: boolean) => void;
-  onCheckAll: (areaId: number, completed: boolean) => void;
-  onOpenEditAssignee: (areaId: number, areaName: string, currentAssignee: string) => void;
+  areaNumber: number;
+  areaName: string;
+  assignee: string;
+  tasks: TaskState[];
+  onToggleTask: (taskId: string) => void;
+  onCheckAll: (completed: boolean) => void;
+  onEditAssignee: () => void;
 }
 
 export function AreaCard({
-  area,
+  areaNumber,
+  areaName,
+  assignee,
+  tasks,
   onToggleTask,
   onCheckAll,
-  onOpenEditAssignee,
+  onEditAssignee,
 }: AreaCardProps) {
-  const completedCount = area.tasks.filter((t) => t.completed).length;
-  const totalCount = area.tasks.length;
+  const completedCount = tasks.filter((t) => t.completed).length;
+  const totalCount = tasks.length;
   const allCompleted = totalCount > 0 && completedCount === totalCount;
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden transition-all">
       {/* Header Area */}
-      <div className="bg-slate-50/80 px-4 py-3 border-b border-slate-200 flex flex-col gap-2">
+      <div className="bg-slate-50/90 px-4 py-3 border-b border-slate-200 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="text-xs font-semibold text-blue-700 tracking-wide uppercase">
-              Area {area.displayOrder}
+            <span className="text-[11px] font-bold text-blue-700 tracking-wider uppercase">
+              Area {areaNumber}
             </span>
             <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
-              {area.name}
+              {areaName}
             </h2>
           </div>
 
           <button
-            onClick={() => onCheckAll(area.id, !allCompleted)}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium shrink-0 flex items-center gap-1.5 transition-colors touch-target ${
+            onClick={() => onCheckAll(!allCompleted)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-colors touch-target ${
               allCompleted
                 ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
                 : "bg-blue-100 text-blue-800 hover:bg-blue-200"
@@ -49,21 +60,19 @@ export function AreaCard({
           </button>
         </div>
 
-        {/* Petugas Banner */}
-        <div className="flex items-center justify-between bg-white px-3 py-1.5 rounded-lg border border-slate-200/80 text-xs">
+        {/* Petugas Bar */}
+        <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200/90 text-xs">
           <div className="flex items-center gap-1.5 overflow-hidden">
-            <span className="text-slate-500 shrink-0">Petugas:</span>
-            <span className="font-semibold text-blue-900 truncate">
-              {area.assigneeText || "Belum ditentukan"}
+            <span className="text-slate-500 shrink-0 font-medium">Petugas:</span>
+            <span className="font-bold text-blue-900 truncate">
+              {assignee || "Belum ditentukan"}
             </span>
           </div>
           <button
-            onClick={() =>
-              onOpenEditAssignee(area.id, area.name, area.assigneeText || "")
-            }
-            className="p-1 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors touch-target flex items-center justify-center shrink-0 ml-1"
-            title="Ganti petugas hari ini"
-            aria-label="Ganti petugas hari ini"
+            onClick={onEditAssignee}
+            className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors touch-target flex items-center justify-center shrink-0 ml-1"
+            title="Ganti nama petugas hari ini"
+            aria-label="Ganti nama petugas hari ini"
           >
             <Edit2 className="w-3.5 h-3.5" />
           </button>
@@ -71,13 +80,13 @@ export function AreaCard({
       </div>
 
       {/* Task Checklist */}
-      <div className="divide-y divide-slate-100 p-1 sm:p-2">
-        {area.tasks.map((task) => {
-          const isDone = Boolean(task.completed);
+      <div className="divide-y divide-slate-100 p-1">
+        {tasks.map((task) => {
+          const isDone = task.completed;
           return (
             <label
               key={task.id}
-              className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-colors touch-target ${
+              className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-colors touch-target select-none ${
                 isDone ? "bg-blue-50/50" : "hover:bg-slate-50"
               }`}
             >
@@ -85,7 +94,7 @@ export function AreaCard({
                 <input
                   type="checkbox"
                   checked={isDone}
-                  onChange={() => onToggleTask(task.id, isDone)}
+                  onChange={() => onToggleTask(task.id)}
                   className="sr-only"
                 />
                 <div
@@ -115,9 +124,9 @@ export function AreaCard({
         })}
       </div>
 
-      {/* Footer status counter */}
+      {/* Footer counter */}
       <div className="px-4 py-2 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-        <span>Status tugas area</span>
+        <span>Status area</span>
         <span className="font-semibold text-slate-700">
           {completedCount} dari {totalCount} selesai
         </span>
