@@ -33,12 +33,12 @@ export function AreaCard({
   const allCompleted = totalCount > 0 && completedCount === totalCount;
 
   return (
-    <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden transition-all">
+    <section className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
       {/* Header Area */}
-      <div className="bg-slate-50/90 px-4 py-3 border-b border-slate-200 flex flex-col gap-2">
+      <div className="bg-slate-50 px-3.5 py-3 border-b border-slate-200/80 space-y-2.5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="text-[11px] font-bold text-blue-700 tracking-wider uppercase">
+            <span className="text-[11px] font-bold text-blue-700 tracking-wide uppercase">
               Area {areaNumber}
             </span>
             <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
@@ -53,7 +53,7 @@ export function AreaCard({
                 ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
                 : "bg-blue-100 text-blue-800 hover:bg-blue-200"
             }`}
-            title={allCompleted ? "Hapus semua centang" : "Centang semua tugas"}
+            title={allCompleted ? "Batalkan semua centang" : "Centang semua tugas"}
           >
             <CheckCheck className="w-3.5 h-3.5" />
             <span>{allCompleted ? "Batal Semua" : "Centang Semua"}</span>
@@ -61,7 +61,7 @@ export function AreaCard({
         </div>
 
         {/* Petugas Bar */}
-        <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200/90 text-xs">
+        <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs">
           <div className="flex items-center gap-1.5 overflow-hidden">
             <span className="text-slate-500 shrink-0 font-medium">Petugas:</span>
             <span className="font-bold text-blue-900 truncate">
@@ -80,17 +80,17 @@ export function AreaCard({
       </div>
 
       {/* Task Checklist */}
-      <div className="divide-y divide-slate-100 p-1">
+      <div className="divide-y divide-slate-100">
         {tasks.map((task) => {
           const isDone = task.completed;
           return (
             <label
               key={task.id}
-              className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-colors touch-target select-none ${
-                isDone ? "bg-blue-50/50" : "hover:bg-slate-50"
+              className={`flex items-center gap-3 px-3.5 py-3 cursor-pointer transition-colors select-none min-h-[46px] ${
+                isDone ? "bg-blue-50/40" : "hover:bg-slate-50 active:bg-slate-100/70"
               }`}
             >
-              <div className="relative flex items-center justify-center shrink-0 mt-0.5">
+              <div className="relative flex items-center justify-center shrink-0">
                 <input
                   type="checkbox"
                   checked={isDone}
@@ -110,14 +110,12 @@ export function AreaCard({
 
               <span
                 className={`text-xs sm:text-sm leading-relaxed flex-1 ${
-                  isDone ? "text-slate-700 font-medium" : "text-slate-800"
+                  isDone
+                    ? "text-slate-500 line-through decoration-slate-300"
+                    : "text-slate-800 font-normal"
                 }`}
               >
                 {task.text}
-              </span>
-
-              <span className="text-xs shrink-0 select-none ml-1">
-                {isDone ? "✅" : "❌"}
               </span>
             </label>
           );
@@ -125,10 +123,10 @@ export function AreaCard({
       </div>
 
       {/* Footer counter */}
-      <div className="px-4 py-2 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+      <div className="px-3.5 py-2 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
         <span>Status area</span>
         <span className="font-semibold text-slate-700">
-          {completedCount} dari {totalCount} selesai
+          {completedCount} dari {totalCount} tugas selesai
         </span>
       </div>
     </section>

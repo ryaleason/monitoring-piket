@@ -16,13 +16,22 @@ export function InstallPrompt() {
   const [isIos, setIsIos] = useState(false);
 
   useEffect(() => {
-    // Check if already running as standalone PWA
+    // Check if running as standalone PWA
     if (
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as any).standalone === true
     ) {
       setIsStandalone(true);
       return;
+    }
+
+    // Check if dismissed in this session
+    try {
+      if (sessionStorage.getItem("pwa_install_dismissed") === "true") {
+        setIsDismissed(true);
+      }
+    } catch {
+      // ignore
     }
 
     // Detect iOS
@@ -43,6 +52,15 @@ export function InstallPrompt() {
     };
   }, []);
 
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    try {
+      sessionStorage.setItem("pwa_install_dismissed", "true");
+    } catch {
+      // ignore
+    }
+  };
+
   if (isStandalone || isDismissed) {
     return null;
   }
@@ -53,11 +71,11 @@ export function InstallPrompt() {
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === "accepted") {
         setDeferredPrompt(null);
+        setIsDismissed(true);
       }
     } else if (isIos) {
       setShowIosGuide(true);
     } else {
-      // Fallback guide
       alert(
         "Untuk memasang aplikasi: buka menu browser (titik tiga di kanan atas) lalu pilih 'Tambahkan ke Layar Utama' / 'Install App'."
       );
@@ -66,32 +84,32 @@ export function InstallPrompt() {
 
   return (
     <>
-      <div className="bg-gradient-to-r from-blue-700 to-blue-800 text-white rounded-2xl p-3 sm:p-3.5 shadow-md flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-            <Smartphone className="w-5 h-5 text-white" />
+      <div className="bg-blue-50/90 border border-blue-200/90 text-blue-950 rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-2.5 shadow-2xs">
+        <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
+          <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center shrink-0">
+            <Smartphone className="w-4 h-4" />
           </div>
-          <div className="leading-tight truncate">
-            <p className="text-xs sm:text-sm font-bold truncate">
+          <div className="truncate">
+            <p className="text-xs sm:text-sm font-bold text-blue-950 truncate">
               Pasang Aplikasi di HP
             </p>
-            <p className="text-[11px] text-blue-100 truncate">
-              Akses cepat langsung dari layar utama tanpa buka browser
+            <p className="text-[11px] text-blue-700 truncate">
+              Akses cepat tanpa repot buka browser
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={handleInstallClick}
-            className="px-3 py-2 bg-white text-blue-800 hover:bg-blue-50 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors touch-target shadow-xs"
+            className="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors touch-target shadow-2xs"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Install</span>
           </button>
           <button
-            onClick={() => setIsDismissed(true)}
-            className="p-1.5 text-white/70 hover:text-white rounded-lg touch-target"
+            onClick={handleDismiss}
+            className="p-1.5 text-blue-500 hover:text-blue-800 rounded-lg touch-target flex items-center justify-center"
             aria-label="Tutup saran instalasi"
           >
             <X className="w-4 h-4" />
@@ -102,14 +120,15 @@ export function InstallPrompt() {
       {/* iOS Safari Guide Modal */}
       {showIosGuide && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-bottom-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-xl border border-slate-100">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm text-slate-900">
                 Cara Pasang di iPhone (Safari)
               </h3>
               <button
                 onClick={() => setShowIosGuide(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg touch-target flex items-center justify-center"
+                aria-label="Tutup panduan"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -121,7 +140,7 @@ export function InstallPrompt() {
                   1
                 </span>
                 <span>
-                  Tekan tombol <strong>Share / Bagikan</strong> (ikon kotak dengan panah ke atas <Share2 className="w-3.5 h-3.5 inline text-blue-600" />) di bagian bawah layar Safari.
+                  Tekan tombol <strong>Share</strong> (ikon kotak dengan panah atas <Share2 className="w-3.5 h-3.5 inline text-blue-600" />) di bilah bawah Safari.
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
@@ -129,7 +148,7 @@ export function InstallPrompt() {
                   2
                 </span>
                 <span>
-                  Gulir ke bawah dan pilih <strong>"Tambahkan ke Layar Utama"</strong> (Add to Home Screen <PlusSquare className="w-3.5 h-3.5 inline text-blue-600" />).
+                  Pilih <strong>Tambahkan ke Layar Utama</strong> (Add to Home Screen <PlusSquare className="w-3.5 h-3.5 inline text-blue-600" />).
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
@@ -137,14 +156,14 @@ export function InstallPrompt() {
                   3
                 </span>
                 <span>
-                  Tekan <strong>"Tambah"</strong> di pojok kanan atas. Ikon aplikasi akan langsung muncul di HP Anda!
+                  Tekan <strong>Tambah</strong> di pojok kanan atas. Ikon aplikasi siap digunakan langsung di layar utama HP.
                 </span>
               </li>
             </ol>
 
             <button
               onClick={() => setShowIosGuide(false)}
-              className="w-full py-3 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-xl text-xs touch-target"
+              className="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-xl text-xs touch-target"
             >
               Saya Mengerti
             </button>

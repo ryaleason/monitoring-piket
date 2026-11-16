@@ -26,6 +26,16 @@ export function EditAssigneeModal({
     setName(currentAssignee);
   }, [currentAssignee, isOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,18 +46,23 @@ export function EditAssigneeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl border border-slate-100 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-blue-600" />
-            <h3 className="font-semibold text-sm text-slate-800">
-              Ganti Nama Petugas
+            <User className="w-4 h-4 text-blue-700" />
+            <h3 id="modal-title" className="font-semibold text-sm text-slate-900">
+              Ubah Nama Petugas
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+            className="text-slate-400 hover:text-slate-600 p-1 rounded-md touch-target flex items-center justify-center"
             aria-label="Tutup"
           >
             <X className="w-4 h-4" />
@@ -87,7 +102,7 @@ export function EditAssigneeModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg touch-target"
+              className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg touch-target"
             >
               Batal
             </button>
@@ -96,7 +111,7 @@ export function EditAssigneeModal({
               disabled={!name.trim()}
               className="px-4 py-2 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 disabled:opacity-50 rounded-lg touch-target flex items-center justify-center transition-colors shadow-xs"
             >
-              Terapkan
+              Simpan
             </button>
           </div>
         </form>

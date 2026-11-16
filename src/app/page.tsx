@@ -16,14 +16,20 @@ import {
 } from "@/lib/schedule";
 import { Copy, Check, CheckCheck, FileText, CalendarDays, Send } from "lucide-react";
 
-const DAYS_LIST = [
-  { index: 1, name: "Senin" },
-  { index: 2, name: "Selasa" },
-  { index: 3, name: "Rabu" },
-  { index: 4, name: "Kamis" },
-  { index: 5, name: "Jumat" },
-  { index: 6, name: "Sabtu" },
-  { index: 0, name: "Minggu" },
+interface DayItem {
+  index: number;
+  name: string;
+  shortName: string;
+}
+
+const DAYS_LIST: DayItem[] = [
+  { index: 1, name: "Senin", shortName: "Sen" },
+  { index: 2, name: "Selasa", shortName: "Sel" },
+  { index: 3, name: "Rabu", shortName: "Rab" },
+  { index: 4, name: "Kamis", shortName: "Kam" },
+  { index: 5, name: "Jumat", shortName: "Jum" },
+  { index: 6, name: "Sabtu", shortName: "Sab" },
+  { index: 0, name: "Minggu", shortName: "Min" },
 ];
 
 export default function HomePage() {
@@ -38,7 +44,7 @@ export default function HomePage() {
     dateString: "",
   });
 
-  // Assignees state per area: { 1: "...", 2: "...", 3: "..." }
+  // Assignees override state per area: { 1: "...", 2: "...", 3: "..." }
   const [customAssignees, setCustomAssignees] = useState<Record<number, string>>({});
 
   // Checklist state: { [taskId]: boolean }
@@ -72,14 +78,14 @@ export default function HomePage() {
     });
     setSelectedDayIndex(jakarta.dayIndex);
 
-    // Load saved checks for today from localStorage if available
+    // Load saved checks for today from localStorage
     try {
       const savedChecks = localStorage.getItem(`piket_checks_${jakarta.dateString}`);
       if (savedChecks) {
         setTaskChecks(JSON.parse(savedChecks));
       }
     } catch {
-      // ignore
+      // ignore storage access issues
     }
   }, []);
 
@@ -170,7 +176,7 @@ export default function HomePage() {
       ...prev,
       [editModal.areaNumber]: newAssignee,
     }));
-    setToastMessage(`Nama petugas Area ${editModal.areaNumber} diperbarui`);
+    setToastMessage(`Petugas Area ${editModal.areaNumber} diperbarui`);
     setToastType("success");
   };
 
@@ -191,14 +197,14 @@ export default function HomePage() {
 
   // Redirection to WhatsApp
   const handleSendToWhatsApp = async () => {
-    // 1. Copy to clipboard first so user always has backup copy
+    // 1. Copy to clipboard first as backup
     await copyToClipboard(formattedReport);
 
     // 2. Open WhatsApp with pre-filled text
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedReport)}`;
     window.open(waUrl, "_blank");
 
-    setToastMessage("Laporan disalin! Membuka WhatsApp...");
+    setToastMessage("Laporan disalin. Membuka WhatsApp...");
     setToastType("success");
   };
 
@@ -223,33 +229,45 @@ export default function HomePage() {
   const percent = Math.round((completedCount / totalTasks) * 100);
   const allGlobalCompleted = completedCount === totalTasks;
 
+  const selectedDayObj = DAYS_LIST.find((d) => d.index === selectedDayIndex);
+  const selectedDayName = selectedDayObj ? selectedDayObj.name : "Senin";
+  const isSelectedToday = selectedDayIndex === dateInfo.dayIndex;
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col antialiased">
       {/* App Header */}
       <Header formattedDate={dateInfo.formattedDate} />
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-xl w-full mx-auto p-4 space-y-4 pb-32">
-        {/* PWA Install Banner */}
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-xl w-full mx-auto px-3.5 py-3 space-y-3.5 pb-28">
+        {/* Compact PWA Install Banner */}
         <InstallPrompt />
 
-        {/* Day Selector Pill Tabs */}
-        <div className="bg-white rounded-2xl p-2.5 border border-slate-200 shadow-xs space-y-2">
-          <div className="flex items-center justify-between px-1.5 text-xs text-slate-500 font-semibold">
-            <span className="flex items-center gap-1.5 text-blue-900">
-              <CalendarDays className="w-4 h-4 text-blue-600" />
-              <span>Jadwal Harian:</span>
-            </span>
+        {/* Day Selector (7-Day Responsive Grid) */}
+        <div className="bg-white rounded-2xl p-3 border border-slate-200/90 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+              <CalendarDays className="w-4 h-4 text-blue-700 shrink-0" />
+              <span>
+                Jadwal: <strong className="text-blue-900">{selectedDayName}</strong>
+                {isSelectedToday && (
+                  <span className="ml-1 text-[11px] font-normal text-blue-700">
+                    (Hari Ini)
+                  </span>
+                )}
+              </span>
+            </div>
             <button
               onClick={() => handleCheckAllGlobal(!allGlobalCompleted)}
-              className="text-blue-700 hover:text-blue-900 hover:underline flex items-center gap-1 touch-target"
+              className="text-blue-700 hover:text-blue-900 active:text-blue-950 font-medium flex items-center gap-1 touch-target text-xs"
             >
               <CheckCheck className="w-3.5 h-3.5" />
-              <span>{allGlobalCompleted ? "Batal Semua" : "Centang Semua Tugas"}</span>
+              <span>{allGlobalCompleted ? "Batal Semua" : "Centang Semua"}</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+          {/* 7 Columns Day Buttons */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
             {DAYS_LIST.map((d) => {
               const isSelected = selectedDayIndex === d.index;
               const isToday = dateInfo.dayIndex === d.index;
@@ -257,23 +275,24 @@ export default function HomePage() {
                 <button
                   key={d.index}
                   onClick={() => handleSelectDay(d.index)}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors touch-target flex items-center gap-1 ${
+                  className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs transition-all touch-target min-h-[44px] ${
                     isSelected
-                      ? "bg-blue-700 text-white shadow-xs"
-                      : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
+                      ? "bg-blue-700 text-white font-bold shadow-2xs"
+                      : isToday
+                      ? "bg-blue-50 text-blue-900 border border-blue-200 font-semibold hover:bg-blue-100/70"
+                      : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/80"
                   }`}
+                  aria-label={`Pilih jadwal hari ${d.name}${isToday ? " (Hari ini)" : ""}`}
                 >
-                  <span>{d.name}</span>
+                  <span className="sm:hidden text-xs">{d.shortName}</span>
+                  <span className="hidden sm:inline text-xs">{d.name}</span>
                   {isToday && (
                     <span
-                      className={`text-[10px] px-1 py-0.2 rounded-full font-bold ${
-                        isSelected
-                          ? "bg-white/20 text-white"
-                          : "bg-blue-100 text-blue-800"
+                      className={`w-1.5 h-1.5 rounded-full mt-1 ${
+                        isSelected ? "bg-white" : "bg-blue-600"
                       }`}
-                    >
-                      Hari Ini
-                    </span>
+                      title="Hari Ini"
+                    />
                   )}
                 </button>
               );
@@ -281,8 +300,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Areas Cards */}
-        <div className="space-y-4">
+        {/* 3 Area Checklist Cards */}
+        <div className="space-y-3.5">
           {DEFAULT_PIKET_AREAS.map((area) => {
             const areaTasks: TaskState[] = area.tasks.map((t) => ({
               id: t.id,
@@ -313,31 +332,27 @@ export default function HomePage() {
           })}
         </div>
 
-        {/* Collapsible Format Preview */}
-        <details className="bg-white rounded-xl border border-slate-200 p-3.5 text-xs text-slate-600 group">
+        {/* Format Preview Details */}
+        <details className="bg-white rounded-xl border border-slate-200 p-3 text-xs text-slate-600 group">
           <summary className="font-semibold text-slate-700 cursor-pointer flex items-center gap-2 select-none touch-target">
-            <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+            <FileText className="w-4 h-4 text-blue-700 shrink-0" />
             <span>Lihat Tampilan Format Teks WhatsApp</span>
           </summary>
-          <pre className="mt-3 p-3 bg-slate-50 rounded-lg text-slate-800 font-mono text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap border border-slate-200/80">
+          <pre className="mt-2.5 p-3 bg-slate-50 rounded-lg text-slate-800 font-mono text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap border border-slate-200/70">
             {formattedReport}
           </pre>
         </details>
       </main>
 
-      {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 sm:p-4 shadow-lg">
-        <div className="max-w-xl mx-auto flex flex-col gap-2.5">
-          {/* Progress bar */}
-          <div className="flex items-center justify-between text-xs text-slate-600 px-1">
-            <div className="flex items-center gap-1.5 font-medium">
-              <span>Progres Selesai:</span>
-              <span className="font-bold text-blue-900">
-                {completedCount}/{totalTasks}
-              </span>
-              <span className="text-slate-400">({percent}%)</span>
-            </div>
-            <div className="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+      {/* Sticky Bottom Actions Bar (Sleek & Compact) */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3.5 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-lg">
+        <div className="max-w-xl mx-auto flex flex-col gap-2">
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between text-xs text-slate-600 px-0.5">
+            <span className="font-medium text-slate-700">
+              Progres: <strong className="text-blue-900">{completedCount}/{totalTasks}</strong> ({percent}%)
+            </span>
+            <div className="w-24 sm:w-28 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
               <div
                 className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${percent}%` }}
@@ -345,33 +360,32 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Action Buttons Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {/* Primary Action: Buka & Kirim ke WhatsApp (Green WhatsApp style) */}
-            <button
-              onClick={handleSendToWhatsApp}
-              className="sm:col-span-2 py-3.5 px-4 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white shadow-md transition-all flex items-center justify-center gap-2 touch-target"
-            >
-              <Send className="w-4 h-4 stroke-[2.5]" />
-              <span>Kirim ke WhatsApp</span>
-            </button>
-
-            {/* Secondary Action: Salin Teks Saja */}
+          {/* Side-by-side Actions: Salin Teks + Kirim ke WhatsApp */}
+          <div className="flex items-center gap-2">
             <button
               onClick={handleCopyOnly}
-              className="py-3 px-3 rounded-xl font-semibold text-xs border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 transition-all flex items-center justify-center gap-1.5 touch-target"
+              className="py-2.5 px-3.5 rounded-xl font-semibold text-xs border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 transition-colors flex items-center justify-center gap-1.5 shrink-0 touch-target"
+              title="Salin format laporan ke clipboard"
             >
               {copiedRecently ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                  <span>Tersalin!</span>
+                  <span>Tersalin</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-4 h-4 text-slate-600" />
                   <span>Salin Teks</span>
                 </>
               )}
+            </button>
+
+            <button
+              onClick={handleSendToWhatsApp}
+              className="flex-1 py-3 px-4 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs transition-all flex items-center justify-center gap-2 touch-target"
+            >
+              <Send className="w-4 h-4 stroke-[2.5]" />
+              <span>Kirim ke WhatsApp</span>
             </button>
           </div>
         </div>

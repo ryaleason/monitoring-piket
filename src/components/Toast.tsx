@@ -25,23 +25,23 @@ export function Toast({ message, type = "success", duration = 3000, onClose }: T
     <div
       role="status"
       aria-live="polite"
-      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium transition-all transform animate-in fade-in slide-in-from-bottom-2 ${
+      className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-xl shadow-lg border text-xs sm:text-sm font-medium transition-all max-w-[90vw] ${
         isSuccess
-          ? "bg-blue-900 text-white border-blue-700"
+          ? "bg-slate-900 text-white border-slate-700"
           : isError
-          ? "bg-rose-900 text-white border-rose-700"
+          ? "bg-rose-950 text-white border-rose-800"
           : "bg-slate-900 text-white border-slate-700"
       }`}
     >
-      {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
-      {isError && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />}
-      <span>{message}</span>
+      {isSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+      {isError && <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />}
+      <span className="truncate">{message}</span>
       <button
         onClick={onClose}
-        className="ml-2 text-white/70 hover:text-white p-1 rounded-md transition-colors"
+        className="ml-1.5 text-white/70 hover:text-white p-1 rounded-md transition-colors"
         aria-label="Tutup notifikasi"
       >
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );
