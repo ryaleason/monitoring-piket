@@ -17,7 +17,7 @@ import {
   formatSantriNames,
   transferSantri,
 } from "@/lib/schedule";
-import { Copy, Check, Send, Calendar } from "lucide-react";
+import { Copy, Check, Minus, Send, Calendar } from "lucide-react";
 
 interface DayItem {
   index: number;
@@ -319,6 +319,7 @@ export default function HomePage() {
   const completedCount = allTasksList.filter((t) => Boolean(taskChecks[t.id])).length;
   const percent = Math.round((completedCount / totalTasks) * 100);
   const allGlobalCompleted = completedCount === totalTasks;
+  const hasSomeGlobalCompleted = completedCount > 0 && !allGlobalCompleted;
 
   const selectedDayObj = DAYS_LIST.find((d) => d.index === selectedDayIndex);
   const selectedDayName = selectedDayObj ? selectedDayObj.name : "Senin";
@@ -347,11 +348,29 @@ export default function HomePage() {
                 </span>
               )}
             </div>
+            {/* Global Check All Checkbox Button (Icon Only - Anti-Slop) */}
             <button
+              type="button"
               onClick={() => handleCheckAllGlobal(!allGlobalCompleted)}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-800 active:text-blue-900 transition-colors"
+              className="p-1 text-slate-500 hover:text-blue-700 hover:bg-blue-100/60 active:bg-blue-200/60 rounded-lg transition-colors touch-target flex items-center justify-center"
+              title={allGlobalCompleted ? "Batalkan semua tugas hari ini" : "Centang semua tugas hari ini"}
+              aria-label={allGlobalCompleted ? "Batalkan semua tugas hari ini" : "Centang semua tugas hari ini"}
             >
-              {allGlobalCompleted ? "Batal Semua" : "Centang Semua"}
+              <div
+                className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${
+                  allGlobalCompleted
+                    ? "bg-blue-600 text-white shadow-2xs"
+                    : hasSomeGlobalCompleted
+                    ? "bg-blue-50 border-2 border-blue-600 text-blue-600"
+                    : "border-2 border-slate-300 bg-white hover:border-blue-500"
+                }`}
+              >
+                {allGlobalCompleted ? (
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                ) : hasSomeGlobalCompleted ? (
+                  <Minus className="w-3.5 h-3.5 stroke-[3]" />
+                ) : null}
+              </div>
             </button>
           </div>
 

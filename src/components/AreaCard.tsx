@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import {
   Check,
+  Minus,
   Edit2,
   Undo2,
   ArrowRight,
@@ -64,6 +65,7 @@ export function AreaCard({
   const completedCount = tasks.filter((t) => t.completed).length;
   const totalCount = tasks.length;
   const allCompleted = totalCount > 0 && completedCount === totalCount;
+  const someCompleted = completedCount > 0 && !allCompleted;
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden transition-all">
@@ -79,13 +81,30 @@ export function AreaCard({
             </h2>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Check All Checkbox Button (Icon Only - Anti-Slop) */}
             <button
+              type="button"
               onClick={() => onCheckAll(!allCompleted)}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-800 active:text-blue-900 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
-              title={allCompleted ? "Batalkan semua centang" : "Centang semua tugas"}
+              className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors touch-target flex items-center justify-center"
+              title={allCompleted ? "Batalkan semua tugas area ini" : "Centang semua tugas area ini"}
+              aria-label={allCompleted ? "Batalkan semua tugas area ini" : "Centang semua tugas area ini"}
             >
-              {allCompleted ? "Batal Semua" : "Centang Semua"}
+              <div
+                className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${
+                  allCompleted
+                    ? "bg-blue-600 text-white shadow-2xs"
+                    : someCompleted
+                    ? "bg-blue-50 border-2 border-blue-600 text-blue-600"
+                    : "border-2 border-slate-300 bg-white hover:border-blue-500"
+                }`}
+              >
+                {allCompleted ? (
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                ) : someCompleted ? (
+                  <Minus className="w-3.5 h-3.5 stroke-[3]" />
+                ) : null}
+              </div>
             </button>
 
             {/* Arrow Toggle Button (Chevron Up / Down) */}
