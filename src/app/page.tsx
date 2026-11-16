@@ -17,7 +17,7 @@ import {
   formatSantriNames,
   transferSantri,
 } from "@/lib/schedule";
-import { Copy, Check, CheckCheck, FileText, CalendarDays, Send } from "lucide-react";
+import { Copy, Check, Send, MessageSquare, Calendar } from "lucide-react";
 
 interface DayItem {
   index: number;
@@ -26,13 +26,13 @@ interface DayItem {
 }
 
 const DAYS_LIST: DayItem[] = [
-  { index: 1, name: "Senin", shortName: "Sen" },
-  { index: 2, name: "Selasa", shortName: "Sel" },
-  { index: 3, name: "Rabu", shortName: "Rab" },
-  { index: 4, name: "Kamis", shortName: "Kam" },
-  { index: 5, name: "Jumat", shortName: "Jum" },
-  { index: 6, name: "Sabtu", shortName: "Sab" },
-  { index: 0, name: "Minggu", shortName: "Min" },
+  { index: 1, name: "Senin", shortName: "SEN" },
+  { index: 2, name: "Selasa", shortName: "SEL" },
+  { index: 3, name: "Rabu", shortName: "RAB" },
+  { index: 4, name: "Kamis", shortName: "KAM" },
+  { index: 5, name: "Jumat", shortName: "JUM" },
+  { index: 6, name: "Sabtu", shortName: "SAB" },
+  { index: 0, name: "Minggu", shortName: "MIN" },
 ];
 
 export default function HomePage() {
@@ -108,7 +108,7 @@ export default function HomePage() {
         setTaskChecks(JSON.parse(savedChecks));
       }
     } catch {
-      // ignore storage access issues
+      // ignore
     }
   }, []);
 
@@ -291,10 +291,7 @@ export default function HomePage() {
 
   // Redirection to WhatsApp
   const handleSendToWhatsApp = async () => {
-    // 1. Copy to clipboard first as backup
     await copyToClipboard(formattedReport);
-
-    // 2. Open WhatsApp with pre-filled text
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedReport)}`;
     window.open(waUrl, "_blank");
 
@@ -328,40 +325,38 @@ export default function HomePage() {
   const isSelectedToday = selectedDayIndex === dateInfo.dayIndex;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col antialiased">
+    <div className="min-h-screen bg-slate-50 flex flex-col antialiased font-sans">
       {/* App Header */}
       <Header formattedDate={dateInfo.formattedDate} />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-xl w-full mx-auto px-3.5 py-3 space-y-3.5 pb-28">
+      <main className="flex-1 max-w-xl w-full mx-auto px-4 py-3.5 space-y-4 pb-32">
         {/* Compact PWA Install Banner */}
         <InstallPrompt />
 
-        {/* Day Selector (7-Day Responsive Grid) */}
-        <div className="bg-white rounded-2xl p-3 border border-slate-200/90 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-              <CalendarDays className="w-4 h-4 text-blue-700 shrink-0" />
-              <span>
-                Jadwal: <strong className="text-blue-900">{selectedDayName}</strong>
-                {isSelectedToday && (
-                  <span className="ml-1 text-[11px] font-normal text-blue-700">
-                    (Hari Ini)
-                  </span>
-                )}
-              </span>
+        {/* Day Selector (Artisanal Calendar Strip) */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-3 space-y-2.5 shadow-2xs">
+          <div className="flex items-center justify-between px-1 text-xs">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <span className="text-slate-600 font-medium">Jadwal:</span>
+              <span className="font-bold text-slate-900">{selectedDayName}</span>
+              {isSelectedToday && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full">
+                  Hari Ini
+                </span>
+              )}
             </div>
             <button
               onClick={() => handleCheckAllGlobal(!allGlobalCompleted)}
-              className="text-blue-700 hover:text-blue-900 active:text-blue-950 font-medium flex items-center gap-1 touch-target text-xs"
+              className="text-xs font-semibold text-slate-500 hover:text-slate-900 active:text-slate-950 transition-colors"
             >
-              <CheckCheck className="w-3.5 h-3.5" />
-              <span>{allGlobalCompleted ? "Batal Semua" : "Centang Semua"}</span>
+              {allGlobalCompleted ? "Batal Semua" : "Centang Semua"}
             </button>
           </div>
 
-          {/* 7 Columns Day Buttons */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+          {/* 7 Columns Minimalist Strip */}
+          <div className="grid grid-cols-7 gap-1 bg-slate-100/70 p-1 rounded-xl">
             {DAYS_LIST.map((d) => {
               const isSelected = selectedDayIndex === d.index;
               const isToday = dateInfo.dayIndex === d.index;
@@ -369,23 +364,21 @@ export default function HomePage() {
                 <button
                   key={d.index}
                   onClick={() => handleSelectDay(d.index)}
-                  className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs transition-all touch-target min-h-[44px] ${
+                  className={`relative flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs transition-all touch-target min-h-[44px] ${
                     isSelected
-                      ? "bg-blue-700 text-white font-bold shadow-2xs"
+                      ? "bg-slate-900 text-white font-bold shadow-xs"
                       : isToday
-                      ? "bg-blue-50 text-blue-900 border border-blue-200 font-semibold hover:bg-blue-100/70"
-                      : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/80"
+                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
-                  aria-label={`Pilih jadwal hari ${d.name}${isToday ? " (Hari ini)" : ""}`}
+                  aria-label={`Jadwal hari ${d.name}`}
                 >
-                  <span className="sm:hidden text-xs">{d.shortName}</span>
-                  <span className="hidden sm:inline text-xs">{d.name}</span>
+                  <span className="text-[11px] font-bold tracking-tight">{d.shortName}</span>
                   {isToday && (
                     <span
-                      className={`w-1.5 h-1.5 rounded-full mt-1 ${
-                        isSelected ? "bg-white" : "bg-blue-600"
+                      className={`w-1 h-1 rounded-full mt-0.5 ${
+                        isSelected ? "bg-white" : "bg-emerald-600"
                       }`}
-                      title="Hari Ini"
                     />
                   )}
                 </button>
@@ -395,7 +388,7 @@ export default function HomePage() {
         </div>
 
         {/* 3 Area Checklist Cards */}
-        <div className="space-y-3.5">
+        <div className="space-y-4">
           {DEFAULT_PIKET_AREAS.map((area) => {
             const areaTasks: TaskState[] = area.tasks.map((t) => ({
               id: t.id,
@@ -404,10 +397,6 @@ export default function HomePage() {
             }));
             const currentAssignee = getAssigneeForArea(area.id);
 
-            // Configure dynamic helper switching:
-            // Area 1 (Dapur): can pull helpers from Lobby
-            // Area 2 (Lobby & Asrama): can pull helpers from Dapur
-            // Area 3 (Musala): user specified "kalau mushola pasti fix"
             let assigneeList: string[] | undefined;
             let defaultAssigneeList: string[] | undefined;
             let availableHelpers: string[] | undefined;
@@ -422,7 +411,6 @@ export default function HomePage() {
                 defaultAssigneeList = defaultDapurList;
                 availableHelpers = dayRoster.lobby;
                 onAddHelper = (name: string) => handleAddHelper(name, 1);
-                // Allow removing if more than 1 or if different from default
                 if (dayRoster.dapur.length > 1 || !defaultDapurList.includes(dayRoster.dapur[0])) {
                   onRemoveHelper = (name: string) => handleRemoveHelper(name, 1);
                 }
@@ -450,6 +438,7 @@ export default function HomePage() {
                 onRemoveHelper={onRemoveHelper}
                 onResetAssignee={handleResetRoster}
                 isModified={isRosterModified}
+                isFixedSchedule={area.id === 3}
                 tasks={areaTasks}
                 onToggleTask={handleToggleTask}
                 onCheckAll={(completed) => handleCheckAllArea(area, completed)}
@@ -466,27 +455,30 @@ export default function HomePage() {
           })}
         </div>
 
-        {/* Format Preview Details */}
-        <details className="bg-white rounded-xl border border-slate-200 p-3 text-xs text-slate-600 group">
-          <summary className="font-semibold text-slate-700 cursor-pointer flex items-center gap-2 select-none touch-target">
-            <FileText className="w-4 h-4 text-blue-700 shrink-0" />
-            <span>Lihat Tampilan Format Teks WhatsApp</span>
-          </summary>
-          <pre className="mt-2.5 p-3 bg-slate-50 rounded-lg text-slate-800 font-mono text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap border border-slate-200/70">
+        {/* WhatsApp Preview Card (Authentic Memo Look) */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 space-y-2.5 shadow-2xs">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-900 flex items-center gap-1.5">
+              <MessageSquare className="w-4 h-4 text-emerald-600" />
+              <span>Format Pesan Grup WhatsApp</span>
+            </span>
+            <span className="text-[11px] text-slate-600">Otomatis siap kirim</span>
+          </div>
+          <div className="bg-[#efeae2]/50 p-3 rounded-xl border border-slate-200/70 text-slate-800 text-[11px] font-mono leading-relaxed whitespace-pre-wrap select-all">
             {formattedReport}
-          </pre>
-        </details>
+          </div>
+        </div>
       </main>
 
-      {/* Sticky Bottom Actions Bar (Sleek & Compact) */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3.5 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-lg">
+      {/* Sticky Bottom Actions Bar (Clean & Docked) */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-lg">
         <div className="max-w-xl mx-auto flex flex-col gap-2">
           {/* Progress Indicator */}
-          <div className="flex items-center justify-between text-xs text-slate-600 px-0.5">
-            <span className="font-medium text-slate-700">
-              Progres: <strong className="text-blue-900">{completedCount}/{totalTasks}</strong> ({percent}%)
+          <div className="flex items-center justify-between text-xs px-0.5">
+            <span className="text-slate-600 font-medium">
+              Progres Selesai: <strong className="text-slate-900">{completedCount}/{totalTasks}</strong> ({percent}%)
             </span>
-            <div className="w-24 sm:w-28 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
+            <div className="w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
               <div
                 className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${percent}%` }}
@@ -494,11 +486,11 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Side-by-side Actions: Salin Teks + Kirim ke WhatsApp */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyOnly}
-              className="py-2.5 px-3.5 rounded-xl font-semibold text-xs border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 transition-colors flex items-center justify-center gap-1.5 shrink-0 touch-target"
+              className="py-3 px-4 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 transition-colors flex items-center justify-center gap-1.5 shrink-0 touch-target"
               title="Salin format laporan ke clipboard"
             >
               {copiedRecently ? (
@@ -516,7 +508,7 @@ export default function HomePage() {
 
             <button
               onClick={handleSendToWhatsApp}
-              className="flex-1 py-3 px-4 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs transition-all flex items-center justify-center gap-2 touch-target"
+              className="flex-1 py-3 px-5 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs transition-all flex items-center justify-center gap-2 touch-target"
             >
               <Send className="w-4 h-4 stroke-[2.5]" />
               <span>Kirim ke WhatsApp</span>
