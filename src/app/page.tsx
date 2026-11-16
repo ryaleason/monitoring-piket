@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { AreaCard, TaskState } from "@/components/AreaCard";
 import { EditAssigneeModal } from "@/components/EditAssigneeModal";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { Toast } from "@/components/Toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { formatDailyReport, AreaReportData } from "@/lib/reportFormatter";
@@ -13,7 +14,7 @@ import {
   DEFAULT_PIKET_AREAS,
   AreaDefinition,
 } from "@/lib/schedule";
-import { Copy, Check, CheckCheck, FileText, CalendarDays } from "lucide-react";
+import { Copy, Check, CheckCheck, FileText, CalendarDays, Send } from "lucide-react";
 
 const DAYS_LIST = [
   { index: 1, name: "Senin" },
@@ -188,12 +189,25 @@ export default function HomePage() {
     return formatDailyReport(areasReportData);
   }, [customAssignees, defaultSchedule, taskChecks]);
 
-  // Copy report to clipboard
-  const handleCopyReport = async () => {
+  // Redirection to WhatsApp
+  const handleSendToWhatsApp = async () => {
+    // 1. Copy to clipboard first so user always has backup copy
+    await copyToClipboard(formattedReport);
+
+    // 2. Open WhatsApp with pre-filled text
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedReport)}`;
+    window.open(waUrl, "_blank");
+
+    setToastMessage("Laporan disalin! Membuka WhatsApp...");
+    setToastType("success");
+  };
+
+  // Copy report only
+  const handleCopyOnly = async () => {
     const success = await copyToClipboard(formattedReport);
     if (success) {
       setCopiedRecently(true);
-      setToastMessage("Laporan berhasil disalin ke clipboard! Siap ditempel ke WhatsApp.");
+      setToastMessage("Laporan berhasil disalin ke clipboard!");
       setToastType("success");
       setTimeout(() => setCopiedRecently(false), 2500);
     } else {
@@ -215,7 +229,10 @@ export default function HomePage() {
       <Header formattedDate={dateInfo.formattedDate} />
 
       {/* Main Content */}
-      <main className="flex-1 max-w-xl w-full mx-auto p-4 space-y-4 pb-28">
+      <main className="flex-1 max-w-xl w-full mx-auto p-4 space-y-4 pb-32">
+        {/* PWA Install Banner */}
+        <InstallPrompt />
+
         {/* Day Selector Pill Tabs */}
         <div className="bg-white rounded-2xl p-2.5 border border-slate-200 shadow-xs space-y-2">
           <div className="flex items-center justify-between px-1.5 text-xs text-slate-500 font-semibold">
@@ -308,9 +325,9 @@ export default function HomePage() {
         </details>
       </main>
 
-      {/* Sticky Bottom Bar with Single Prominent Action Button */}
+      {/* Sticky Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 sm:p-4 shadow-lg">
-        <div className="max-w-xl mx-auto flex flex-col gap-2">
+        <div className="max-w-xl mx-auto flex flex-col gap-2.5">
           {/* Progress bar */}
           <div className="flex items-center justify-between text-xs text-slate-600 px-1">
             <div className="flex items-center gap-1.5 font-medium">
@@ -322,33 +339,41 @@ export default function HomePage() {
             </div>
             <div className="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                className="bg-emerald-600 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${percent}%` }}
               />
             </div>
           </div>
 
-          {/* Prominent Copy Button */}
-          <button
-            onClick={handleCopyReport}
-            className={`w-full py-4 px-4 rounded-xl font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2.5 touch-target ${
-              copiedRecently
-                ? "bg-emerald-600 text-white"
-                : "bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white ring-2 ring-blue-700/20"
-            }`}
-          >
-            {copiedRecently ? (
-              <>
-                <Check className="w-5 h-5 text-emerald-200 stroke-[3]" />
-                <span>Laporan Berhasil Disalin!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-5 h-5 stroke-[2.2]" />
-                <span>Salin Laporan WhatsApp</span>
-              </>
-            )}
-          </button>
+          {/* Action Buttons Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {/* Primary Action: Buka & Kirim ke WhatsApp (Green WhatsApp style) */}
+            <button
+              onClick={handleSendToWhatsApp}
+              className="sm:col-span-2 py-3.5 px-4 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white shadow-md transition-all flex items-center justify-center gap-2 touch-target"
+            >
+              <Send className="w-4 h-4 stroke-[2.5]" />
+              <span>Kirim ke WhatsApp</span>
+            </button>
+
+            {/* Secondary Action: Salin Teks Saja */}
+            <button
+              onClick={handleCopyOnly}
+              className="py-3 px-3 rounded-xl font-semibold text-xs border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 transition-all flex items-center justify-center gap-1.5 touch-target"
+            >
+              {copiedRecently ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                  <span>Tersalin!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  <span>Salin Teks</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded rectangle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- Outer border accent -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="none" stroke="#60a5fa" stroke-width="8" opacity="0.4"/>
+  
+  <!-- Mosque Dome Silhouette -->
+  <path d="M256 100 C256 100 210 160 210 200 C210 220 226 236 246 236 L266 236 C286 236 302 220 302 200 C302 160 256 100 256 100 Z" fill="#93c5fd" opacity="0.8"/>
+  <circle cx="256" cy="90" r="10" fill="#fef08a"/>
+
+  <!-- Checklist Board -->
+  <rect x="146" y="210" width="220" height="230" rx="24" fill="#ffffff" stroke="#bfdbfe" stroke-width="6"/>
+  
+  <!-- Clip on top of board -->
+  <rect x="216" y="196" width="80" height="26" rx="10" fill="#3b82f6"/>
+
+  <!-- Checkmark 1 -->
+  <path d="M180 260 L200 280 L236 240" fill="none" stroke="#16a34a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="250" y1="260" x2="330" y2="260" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Checkmark 2 -->
+  <path d="M180 320 L200 340 L236 300" fill="none" stroke="#16a34a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="250" y1="320" x2="330" y2="320" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Checkmark 3 -->
+  <path d="M180 380 L200 400 L236 360" fill="none" stroke="#16a34a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="250" y1="380" x2="330" y2="380" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+</svg>

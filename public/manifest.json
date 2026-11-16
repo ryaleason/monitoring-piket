@@ -1,0 +1,31 @@
+{
+  "name": "ITBS AL- Kautsar - Monitoring piket",
+  "short_name": "Piket ITBS",
+  "description": "Aplikasi pencatatan piket harian santri Asrama & Musala ITBS AL-Kautsar dan pengiriman laporan ke WhatsApp",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
