@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/Header";
-import { AreaCard, TaskState } from "@/components/AreaCard";
+import { AreaCard, TaskState, AssigneeItem } from "@/components/AreaCard";
 import { EditAssigneeModal } from "@/components/EditAssigneeModal";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { Toast } from "@/components/Toast";
@@ -171,7 +171,7 @@ export default function HomePage() {
       const updated = transferSantri(prev, name, toArea === 1 ? "dapur" : "lobby");
       setToastMessage(
         toArea === 1
-          ? `${name} ditambahkan membantu di Dapur`
+          ? `${name} pindah membantu di Dapur`
           : `${name} dipindahkan ke Asrama`
       );
       setToastType("success");
@@ -387,7 +387,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 3 Area Checklist Cards */}
+        {/* 3 Area Checklist Cards with Solusi 2 (Arah Pindah Jelas) */}
         <div className="space-y-4">
           {DEFAULT_PIKET_AREAS.map((area) => {
             const areaTasks: TaskState[] = area.tasks.map((t) => ({
@@ -397,31 +397,41 @@ export default function HomePage() {
             }));
             const currentAssignee = getAssigneeForArea(area.id);
 
-            let assigneeList: string[] | undefined;
-            let defaultAssigneeList: string[] | undefined;
-            let availableHelpers: string[] | undefined;
-            let onAddHelper: ((name: string) => void) | undefined;
-            let onRemoveHelper: ((name: string) => void) | undefined;
+            let assigneeItems: AssigneeItem[] | undefined;
+            let canTransferToOtherArea: boolean | undefined;
+            let transferActionLabel: string | undefined;
+            let onTransferPerson: ((name: string) => void) | undefined;
+            let onReturnPerson: ((name: string) => void) | undefined;
 
             const isSunday = selectedDayIndex === 0;
 
             if (!isSunday) {
               if (area.id === 1) {
-                assigneeList = dayRoster.dapur;
-                defaultAssigneeList = defaultDapurList;
-                availableHelpers = dayRoster.lobby;
-                onAddHelper = (name: string) => handleAddHelper(name, 1);
-                if (dayRoster.dapur.length > 1 || !defaultDapurList.includes(dayRoster.dapur[0])) {
-                  onRemoveHelper = (name: string) => handleRemoveHelper(name, 1);
-                }
+                // Area 1: Dapur
+                assigneeItems = dayRoster.dapur.map((name) => ({
+                  name,
+                  isGuest: !defaultDapurList.includes(name), // true if transferred from Asrama
+                }));
+                // If a guest (e.g. Andi) is in Dapur, onReturnPerson returns him to Asrama
+                onReturnPerson = (name: string) => handleRemoveHelper(name, 1);
+
+                // Option to send default Dapur person to Asrama if needed
+                canTransferToOtherArea = true;
+                transferActionLabel = "ke Asrama";
+                onTransferPerson = (name: string) => handleAddHelper(name, 2);
               } else if (area.id === 2) {
-                assigneeList = dayRoster.lobby;
-                defaultAssigneeList = defaultLobbyList;
-                availableHelpers = dayRoster.dapur;
-                onAddHelper = (name: string) => handleAddHelper(name, 2);
-                if (dayRoster.lobby.length > 1 || !defaultLobbyList.includes(dayRoster.lobby[0])) {
-                  onRemoveHelper = (name: string) => handleRemoveHelper(name, 2);
-                }
+                // Area 2: Lobby & Asrama
+                assigneeItems = dayRoster.lobby.map((name) => ({
+                  name,
+                  isGuest: !defaultLobbyList.includes(name), // true if transferred from Dapur
+                }));
+                // Default santri in Asrama (e.g. Andi, Ega) have "Bantu Dapur" button!
+                canTransferToOtherArea = true;
+                transferActionLabel = "Bantu Dapur";
+                onTransferPerson = (name: string) => handleAddHelper(name, 1);
+
+                // If someone is a guest from Dapur
+                onReturnPerson = (name: string) => handleRemoveHelper(name, 2);
               }
             }
 
@@ -431,11 +441,11 @@ export default function HomePage() {
                 areaNumber={area.id}
                 areaName={area.name}
                 assignee={currentAssignee}
-                assigneeList={assigneeList}
-                defaultAssigneeList={defaultAssigneeList}
-                availableHelpers={availableHelpers}
-                onAddHelper={onAddHelper}
-                onRemoveHelper={onRemoveHelper}
+                assigneeItems={assigneeItems}
+                canTransferToOtherArea={canTransferToOtherArea}
+                transferActionLabel={transferActionLabel}
+                onTransferPerson={onTransferPerson}
+                onReturnPerson={onReturnPerson}
                 onResetAssignee={handleResetRoster}
                 isModified={isRosterModified}
                 isFixedSchedule={area.id === 3}
