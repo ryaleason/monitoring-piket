@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSettings, updateSetting } from "@/lib/db";
+import { validateAdminPin } from "@/lib/auth";
 
 export async function GET() {
   try {
     const settings = getSettings();
-    return NextResponse.json({ settings });
+    // NEVER leak admin_pin to public client
+    const { admin_pin: _omitted, ...safeSettings } = settings;
+    return NextResponse.json({ settings: safeSettings });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
@@ -12,6 +15,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (!validateAdminPin(request)) {
+      return NextResponse.json({ error: "Unauthorized: PIN admin tidak valid" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { key, value } = body;
 

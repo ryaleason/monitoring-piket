@@ -5,6 +5,9 @@ import { POST as postCheck } from "@/app/api/daily/check/route";
 import { POST as postAssignee } from "@/app/api/daily/assignee/route";
 import { POST as postStatus } from "@/app/api/daily/status/route";
 import { POST as postAuth } from "@/app/api/admin/auth/route";
+import { GET as getSettingsApi, POST as postSettingsApi } from "@/app/api/admin/settings/route";
+import { POST as postScheduleApi } from "@/app/api/admin/schedule/route";
+import { POST as postTaskApi, DELETE as deleteTaskApi } from "@/app/api/admin/tasks/route";
 
 describe("API Routes", () => {
   beforeEach(() => {
@@ -129,5 +132,55 @@ describe("API Routes", () => {
     expect(invalidRes.status).toBe(401);
     const invalidData = await invalidRes.json();
     expect(invalidData.valid).toBe(false);
+  });
+
+  it("GET /api/admin/settings does NOT leak admin_pin (Critical Fix 1)", async () => {
+    const res = await getSettingsApi();
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.settings).toBeDefined();
+    expect(data.settings.admin_pin).toBeUndefined();
+    expect(data.settings.reminder_cutoff_time).toBeDefined();
+  });
+
+  it("Admin mutation endpoints require valid x-admin-pin header (Critical Fix 2)", async () => {
+    // 1. POST /api/admin/schedule without header
+    const noAuthSchedReq = new Request("http://localhost/api/admin/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schedule: [] }),
+    });
+    const noAuthSchedRes = await postScheduleApi(noAuthSchedReq);
+    expect(noAuthSchedRes.status).toBe(401);
+
+    // With valid header
+    const authSchedReq = new Request("http://localhost/api/admin/schedule", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-pin": "1234",
+      },
+      body: JSON.stringify({ schedule: [] }),
+    });
+    const authSchedRes = await postScheduleApi(authSchedReq);
+    expect(authSchedRes.status).toBe(200);
+
+    // 2. POST /api/admin/tasks without header
+    const noAuthTaskReq = new Request("http://localhost/api/admin/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ areaId: 1, text: "Unauthorized task" }),
+    });
+    const noAuthTaskRes = await postTaskApi(noAuthTaskReq);
+    expect(noAuthTaskRes.status).toBe(401);
+
+    // 3. POST /api/admin/settings without header
+    const noAuthSettingsReq = new Request("http://localhost/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "reminder_cutoff_time", value: "22:00" }),
+    });
+    const noAuthSettingsRes = await postSettingsApi(noAuthSettingsReq);
+    expect(noAuthSettingsRes.status).toBe(401);
   });
 });

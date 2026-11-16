@@ -70,7 +70,10 @@ export function ScheduleManager({ onNotify }: ScheduleManagerProps) {
     try {
       const res = await fetch("/api/admin/schedule", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-pin": sessionStorage.getItem("admin_pin") || "",
+        },
         body: JSON.stringify({ schedule }),
       });
 

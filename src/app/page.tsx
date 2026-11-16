@@ -209,16 +209,8 @@ export default function HomePage() {
     setIsCopying(true);
 
     try {
-      // Refresh latest formatted report string
-      const res = await fetch(`/api/daily?date=${data.date}`);
-      let reportText = data.formattedReport;
-      if (res.ok) {
-        const full = await res.json();
-        setData(full);
-        reportText = full.formattedReport;
-      }
-
-      const success = await copyToClipboard(reportText);
+      // Invoke clipboard copy immediately within user gesture
+      const success = await copyToClipboard(data.formattedReport);
       if (success) {
         showToast("Laporan berhasil disalin ke clipboard!");
       } else {

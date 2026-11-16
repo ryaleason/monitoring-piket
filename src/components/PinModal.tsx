@@ -29,6 +29,7 @@ export function PinModal({ onSuccess }: PinModalProps) {
       const data = await res.json();
       if (res.ok && data.valid) {
         sessionStorage.setItem("admin_auth", "true");
+        sessionStorage.setItem("admin_pin", pin.trim());
         onSuccess();
       } else {
         setError(data.error || "PIN salah. Silakan coba lagi.");

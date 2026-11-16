@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getTasksByArea, saveTask, deleteTask } from "@/lib/db";
+import { validateAdminPin } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -12,6 +13,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (!validateAdminPin(request)) {
+      return NextResponse.json({ error: "Unauthorized: PIN admin tidak valid" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, areaId, text, displayOrder, active } = body;
 
@@ -35,6 +40,10 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    if (!validateAdminPin(request)) {
+      return NextResponse.json({ error: "Unauthorized: PIN admin tidak valid" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

@@ -83,6 +83,6 @@ export const INITIAL_SCHEDULE = [
 ];
 
 export const INITIAL_SETTINGS: Record<string, string> = {
-  admin_pin: "1234",
-  reminder_cutoff_time: "20:00",
+  admin_pin: process.env.ADMIN_PIN || "1234",
+  reminder_cutoff_time: process.env.REMINDER_CUTOFF_TIME || "20:00",
 };

@@ -48,7 +48,10 @@ export function TaskManager({ onNotify }: TaskManagerProps) {
 
       const res = await fetch("/api/admin/tasks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-pin": sessionStorage.getItem("admin_pin") || "",
+        },
         body: JSON.stringify({
           areaId: selectedAreaId,
           text: newTaskText.trim(),
@@ -74,7 +77,10 @@ export function TaskManager({ onNotify }: TaskManagerProps) {
     try {
       const res = await fetch("/api/admin/tasks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-pin": sessionStorage.getItem("admin_pin") || "",
+        },
         body: JSON.stringify({
           id: task.id,
           areaId: task.areaId,
@@ -99,6 +105,9 @@ export function TaskManager({ onNotify }: TaskManagerProps) {
     try {
       const res = await fetch(`/api/admin/tasks?id=${taskId}`, {
         method: "DELETE",
+        headers: {
+          "x-admin-pin": sessionStorage.getItem("admin_pin") || "",
+        },
       });
 
       if (!res.ok) throw new Error();

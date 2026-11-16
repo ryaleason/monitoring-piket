@@ -39,7 +39,10 @@ export function SettingsManager({ onNotify }: SettingsManagerProps) {
     try {
       const res = await fetch("/api/admin/settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-pin": sessionStorage.getItem("admin_pin") || "",
+        },
         body: JSON.stringify({
           key: "reminder_cutoff_time",
           value: cutoffTime,
@@ -68,7 +71,10 @@ export function SettingsManager({ onNotify }: SettingsManagerProps) {
     try {
       const res = await fetch("/api/admin/settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-pin": sessionStorage.getItem("admin_pin") || "",
+        },
         body: JSON.stringify({
           key: "admin_pin",
           value: newPin.trim(),
@@ -76,6 +82,7 @@ export function SettingsManager({ onNotify }: SettingsManagerProps) {
       });
 
       if (!res.ok) throw new Error();
+      sessionStorage.setItem("admin_pin", newPin.trim());
       setNewPin("");
       setConfirmPin("");
       onNotify("PIN Pengurus berhasil diubah!");
