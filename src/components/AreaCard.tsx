@@ -161,7 +161,7 @@ export function AreaCard({
                     return (
                       <div
                         key={item.name}
-                        className="inline-flex items-center rounded-lg border border-blue-200/90 bg-blue-50/70 text-xs overflow-hidden shadow-2xs"
+                        className="inline-flex items-center rounded-lg border border-blue-200/90 text-xs overflow-hidden shadow-2xs"
                       >
                         <span className="px-2.5 py-1 font-semibold text-blue-900">
                           {item.name}
@@ -169,7 +169,7 @@ export function AreaCard({
                         <button
                           type="button"
                           onClick={() => onTransferPerson(item.name)}
-                          className="flex items-center gap-1 px-2 py-1 bg-blue-100/60 hover:bg-blue-200/80 active:bg-blue-300/80 text-blue-800 border-l border-blue-200/90 text-[11px] font-medium transition-colors touch-target min-h-0 min-w-0"
+                          className="flex items-center gap-1 px-2 py-1  hover:bg-blue-200/80 active:bg-blue-300/80 text-blue-800 border-l border-blue-200/90 text-[11px] font-medium transition-colors touch-target min-h-0 min-w-0"
                           title={`${transferActionLabel || "Bantu"} ${item.name}`}
                           aria-label={`${transferActionLabel || "Bantu"} ${item.name}`}
                         >
