@@ -113,40 +113,61 @@ export function AreaCard({
             {assigneeItems && assigneeItems.length > 0 ? (
               <div className="flex items-center gap-1.5 flex-wrap">
                 {assigneeItems.map((item) => {
-                  return (
-                    <div
-                      key={item.name}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                        item.isGuest
-                          ? "bg-emerald-50 text-emerald-950 border border-emerald-300 shadow-2xs"
-                          : "bg-blue-50 text-blue-900 border border-blue-200/90"
-                      }`}
-                    >
-                      <span>{item.name}</span>
-
-                      {/* Guest helper in this area: Show Return button */}
-                      {item.isGuest && onReturnPerson ? (
+                  // Case 1: Guest helper in this area (e.g. Izal helping in Dapur) -> Seamless emerald segmented pill
+                  if (item.isGuest && onReturnPerson) {
+                    return (
+                      <div
+                        key={item.name}
+                        className="inline-flex items-center rounded-lg border border-emerald-300 bg-emerald-50 text-xs overflow-hidden shadow-2xs"
+                      >
+                        <span className="px-2.5 py-1 font-semibold text-emerald-950">
+                          {item.name}
+                        </span>
                         <button
                           type="button"
                           onClick={() => onReturnPerson(item.name)}
-                          className="px-1.5 py-0.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[10px] font-bold flex items-center gap-0.5 transition-colors touch-target min-h-0 min-w-0 shadow-2xs"
+                          className="flex items-center gap-1 px-2 py-1 bg-emerald-100/70 hover:bg-emerald-200 active:bg-emerald-300 text-emerald-900 border-l border-emerald-300/80 text-[11px] font-medium transition-colors touch-target min-h-0 min-w-0"
                           title={`Kembalikan ${item.name} ke area asalnya`}
+                          aria-label={`Kembalikan ${item.name} ke area asalnya`}
                         >
-                          <Undo2 className="w-2.5 h-2.5" />
+                          <Undo2 className="w-3 h-3 text-emerald-700" />
                           <span>Kembalikan</span>
                         </button>
-                      ) : canTransferToOtherArea && onTransferPerson ? (
-                        /* Default santri: Show transfer button to help other area */
+                      </div>
+                    );
+                  }
+
+                  // Case 2: Default santri with directional transfer (e.g. Asrama -> Bantu Dapur) -> Seamless blue segmented pill
+                  if (canTransferToOtherArea && onTransferPerson) {
+                    return (
+                      <div
+                        key={item.name}
+                        className="inline-flex items-center rounded-lg border border-blue-200/90 bg-blue-50/70 text-xs overflow-hidden shadow-2xs"
+                      >
+                        <span className="px-2.5 py-1 font-semibold text-blue-900">
+                          {item.name}
+                        </span>
                         <button
                           type="button"
                           onClick={() => onTransferPerson(item.name)}
-                          className="px-1.5 py-0.5 bg-white hover:bg-blue-100 active:bg-blue-200 text-blue-700 border border-blue-300 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors touch-target min-h-0 min-w-0 shadow-2xs"
+                          className="flex items-center gap-1 px-2 py-1 bg-blue-100/60 hover:bg-blue-200/80 active:bg-blue-300/80 text-blue-800 border-l border-blue-200/90 text-[11px] font-medium transition-colors touch-target min-h-0 min-w-0"
                           title={`${transferActionLabel || "Bantu"} ${item.name}`}
+                          aria-label={`${transferActionLabel || "Bantu"} ${item.name}`}
                         >
                           <span>{transferActionLabel || "Bantu Dapur"}</span>
-                          <ArrowRight className="w-2.5 h-2.5" />
+                          <ArrowRight className="w-3 h-3 text-blue-600" />
                         </button>
-                      ) : null}
+                      </div>
+                    );
+                  }
+
+                  // Case 3: Standard default santri without transfer button (e.g. Host of Dapur, or Musala)
+                  return (
+                    <div
+                      key={item.name}
+                      className="inline-flex items-center px-2.5 py-1 rounded-lg border border-blue-200/90 bg-blue-50/70 text-xs font-semibold text-blue-900 shadow-2xs"
+                    >
+                      <span>{item.name}</span>
                     </div>
                   );
                 })}

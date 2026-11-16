@@ -415,10 +415,8 @@ export default function HomePage() {
                 // If a guest (e.g. Andi) is in Dapur, onReturnPerson returns him to Asrama
                 onReturnPerson = (name: string) => handleRemoveHelper(name, 1);
 
-                // Option to send default Dapur person to Asrama if needed
-                canTransferToOtherArea = true;
-                transferActionLabel = "ke Asrama";
-                onTransferPerson = (name: string) => handleAddHelper(name, 2);
+                // Dapur host stays in Dapur; only helpers from Asrama move here
+                canTransferToOtherArea = false;
               } else if (area.id === 2) {
                 // Area 2: Lobby & Asrama
                 assigneeItems = dayRoster.lobby.map((name) => ({
