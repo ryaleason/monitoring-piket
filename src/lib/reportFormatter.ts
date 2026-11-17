@@ -11,21 +11,27 @@ export interface TaskReportData {
 export interface AreaReportData {
   areaNumber: number;
   areaName: string;
-  assigneeText: string;
+  assigneeText?: string;
   tasks: TaskReportData[];
 }
 
-export function formatDailyReport(areas: AreaReportData[]): string {
+export function formatDailyReport(areas: AreaReportData[], includeAssignee: boolean = false): string {
   const lines: string[] = ["List Piket Asrama & Musala", ""];
 
   areas.forEach((area, index) => {
-    // Exact header format: "N. AreaName : AssigneeName" (note space before colon)
-    lines.push(`${area.areaNumber}. ${area.areaName} : ${area.assigneeText}`);
+    if (includeAssignee && area.assigneeText && area.assigneeText.trim() !== "") {
+      lines.push(`${area.areaNumber}. ${area.areaName} : ${area.assigneeText}`);
+    } else {
+      lines.push(`${area.areaNumber}. ${area.areaName}`);
+    }
     lines.push("");
 
     area.tasks.forEach((task) => {
-      const mark = task.completed ? "✅" : "❌";
-      lines.push(`${task.text} ${mark}`);
+      if (task.completed) {
+        lines.push(`${task.text} ✅`);
+      } else {
+        lines.push(task.text);
+      }
     });
 
     // Add empty line between areas, except after the last area

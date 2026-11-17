@@ -51,7 +51,7 @@ describe("reportFormatter", () => {
     const expected =
 `List Piket Asrama & Musala
 
-1. Dapur : Ahmad
+1. Dapur
 
 Membersihkan dan merapikan area dapur. ✅
 Membersihkan meja dan wastafel. ✅
@@ -60,7 +60,7 @@ Menanak nasi. ✅
 Membuang sampah. ✅
 Memastikan dapur bersih dan rapi. ✅
 
-2. Lobby, Ruang Belajar, Halaman & Ruang Asrama : Fulan
+2. Lobby, Ruang Belajar, Halaman & Ruang Asrama
 
 Menyapu dan mengepel area ruang belajar dan lobby. ✅
 Menata dan merapikan sepatu. ✅
@@ -71,7 +71,7 @@ Merapikan barang-barang yang berserakan. ✅
 Mengumpulkan dan membuang sampah. ✅
 Memastikan seluruh area bersih dan rapi. ✅
 
-3. Musala & Kamar Mandi : Rakha & Ega
+3. Musala & Kamar Mandi
 
 Menyapu dan mengepel area musala. ✅
 Membersihkan/menebahi karpet musala. ✅
@@ -85,7 +85,32 @@ Memastikan musala dan kamar mandi bersih, rapi, dan nyaman. ✅`;
     expect(actual).toBe(expected);
   });
 
-  it("marks uncompleted tasks with ❌ and maintains space before colon", () => {
+  it("leaves uncompleted tasks blank (no ❌) and omits names by default", () => {
+    const areas: AreaReportData[] = [
+      {
+        areaNumber: 1,
+        areaName: "Dapur",
+        assigneeText: "Zaid",
+        tasks: [
+          { text: "Menanak nasi.", completed: true },
+          { text: "Membuang sampah.", completed: false },
+        ],
+      },
+    ];
+
+    const expected =
+`List Piket Asrama & Musala
+
+1. Dapur
+
+Menanak nasi. ✅
+Membuang sampah.`;
+
+    const actual = formatDailyReport(areas);
+    expect(actual).toBe(expected);
+  });
+
+  it("supports includeAssignee option when explicitly requested", () => {
     const areas: AreaReportData[] = [
       {
         areaNumber: 1,
@@ -104,9 +129,9 @@ Memastikan musala dan kamar mandi bersih, rapi, dan nyaman. ✅`;
 1. Dapur : Zaid
 
 Menanak nasi. ✅
-Membuang sampah. ❌`;
+Membuang sampah.`;
 
-    const actual = formatDailyReport(areas);
+    const actual = formatDailyReport(areas, true);
     expect(actual).toBe(expected);
   });
 });
