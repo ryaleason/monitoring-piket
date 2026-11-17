@@ -15,11 +15,15 @@ export interface AreaReportData {
   tasks: TaskReportData[];
 }
 
-export function formatDailyReport(areas: AreaReportData[], includeAssignee: boolean = false): string {
+export function formatDailyReport(areas: AreaReportData[]): string {
   const lines: string[] = ["List Piket Asrama & Musala", ""];
 
   areas.forEach((area, index) => {
-    if (includeAssignee && area.assigneeText && area.assigneeText.trim() !== "") {
+    // Only show assignee name if the area is checked (has completed tasks)
+    const isAreaChecked = area.tasks.some((t) => t.completed);
+    const hasAssignee = area.assigneeText && area.assigneeText.trim() !== "";
+
+    if (isAreaChecked && hasAssignee) {
       lines.push(`${area.areaNumber}. ${area.areaName} : ${area.assigneeText}`);
     } else {
       lines.push(`${area.areaNumber}. ${area.areaName}`);
