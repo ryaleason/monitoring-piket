@@ -50,36 +50,36 @@ export const INITIAL_AREAS: SeedArea[] = [
   },
 ];
 
-// Sample initial weekly schedule for 7 days (0: Minggu, 1: Senin, ..., 6: Sabtu)
+// Official weekly schedule for 7 days (0: Minggu, 1: Senin, ..., 6: Sabtu)
 export const INITIAL_SCHEDULE = [
   // 0: Minggu
-  { dayOfWeek: 0, areaId: 1, assignee: "Zaid" },
-  { dayOfWeek: 0, areaId: 2, assignee: "Umar" },
-  { dayOfWeek: 0, areaId: 3, assignee: "Ali & Hasan" },
+  { dayOfWeek: 0, areaId: 1, assignee: "Semua Santri" },
+  { dayOfWeek: 0, areaId: 2, assignee: "Semua Santri" },
+  { dayOfWeek: 0, areaId: 3, assignee: "Semua Santri" },
   // 1: Senin
-  { dayOfWeek: 1, areaId: 1, assignee: "Ahmad" },
-  { dayOfWeek: 1, areaId: 2, assignee: "Fulan" },
-  { dayOfWeek: 1, areaId: 3, assignee: "Rakha & Ega" },
+  { dayOfWeek: 1, areaId: 1, assignee: "Gabrial" },
+  { dayOfWeek: 1, areaId: 2, assignee: "Izal & Arman" },
+  { dayOfWeek: 1, areaId: 3, assignee: "Ega & Rakha" },
   // 2: Selasa
-  { dayOfWeek: 2, areaId: 1, assignee: "Bilal" },
-  { dayOfWeek: 2, areaId: 2, assignee: "Hamzah" },
-  { dayOfWeek: 2, areaId: 3, assignee: "Salman & Zubair" },
+  { dayOfWeek: 2, areaId: 1, assignee: "Akyas" },
+  { dayOfWeek: 2, areaId: 2, assignee: "Hisyam, Ega & Evan" },
+  { dayOfWeek: 2, areaId: 3, assignee: "Yasir & Hanif" },
   // 3: Rabu
-  { dayOfWeek: 3, areaId: 1, assignee: "Tariq" },
-  { dayOfWeek: 3, areaId: 2, assignee: "Khalid" },
-  { dayOfWeek: 3, areaId: 3, assignee: "Usamah & Sa'ad" },
+  { dayOfWeek: 3, areaId: 1, assignee: "Rakha" },
+  { dayOfWeek: 3, areaId: 2, assignee: "Yasir & Hanif" },
+  { dayOfWeek: 3, areaId: 3, assignee: "Gabrial & Izal" },
   // 4: Kamis
-  { dayOfWeek: 4, areaId: 1, assignee: "Ibrahim" },
-  { dayOfWeek: 4, areaId: 2, assignee: "Yusuf" },
-  { dayOfWeek: 4, areaId: 3, assignee: "Yahya & Zakariya" },
+  { dayOfWeek: 4, areaId: 1, assignee: "Arman" },
+  { dayOfWeek: 4, areaId: 2, assignee: "Ashlah & Rakha" },
+  { dayOfWeek: 4, areaId: 3, assignee: "Akyas & Hisyam" },
   // 5: Jumat
-  { dayOfWeek: 5, areaId: 1, assignee: "Ismail" },
-  { dayOfWeek: 5, areaId: 2, assignee: "Ilyas" },
-  { dayOfWeek: 5, areaId: 3, assignee: "Harun & Musa" },
+  { dayOfWeek: 5, areaId: 1, assignee: "Gabrial" },
+  { dayOfWeek: 5, areaId: 2, assignee: "Akyas & Hisyam" },
+  { dayOfWeek: 5, areaId: 3, assignee: "Yasir & Hanif" },
   // 6: Sabtu
-  { dayOfWeek: 6, areaId: 1, assignee: "Idris" },
-  { dayOfWeek: 6, areaId: 2, assignee: "Dawud" },
-  { dayOfWeek: 6, areaId: 3, assignee: "Sulaiman & Yunus" },
+  { dayOfWeek: 6, areaId: 1, assignee: "Izal" },
+  { dayOfWeek: 6, areaId: 2, assignee: "Ashlah & Ega" },
+  { dayOfWeek: 6, areaId: 3, assignee: "Evan & Arman" },
 ];
 
 export const INITIAL_SETTINGS: Record<string, string> = {

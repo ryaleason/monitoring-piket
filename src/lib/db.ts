@@ -141,15 +141,21 @@ export function initDb(dbPath: string = DEFAULT_DB_PATH): DatabaseSync {
     }
   }
 
-  // Seed weekly schedule if empty
+  // Seed weekly schedule if empty or if containing legacy placeholders
   const countSchedStmt = db.prepare("SELECT COUNT(*) as count FROM weekly_schedule");
   const schedCount = (countSchedStmt.get() as { count: number }).count;
-  if (schedCount === 0) {
-    const insertSched = db.prepare(
-      "INSERT INTO weekly_schedule (day_of_week, area_id, assignee) VALUES (?, ?, ?)"
+  const hasPlaceholder = db
+    .prepare(
+      "SELECT 1 FROM weekly_schedule WHERE assignee = 'Zaid' OR assignee = 'Bilal' OR assignee LIKE '%Andi%' LIMIT 1"
+    )
+    .get();
+
+  if (schedCount === 0 || Boolean(hasPlaceholder)) {
+    const upsertSched = db.prepare(
+      "INSERT INTO weekly_schedule (day_of_week, area_id, assignee) VALUES (?, ?, ?) ON CONFLICT(day_of_week, area_id) DO UPDATE SET assignee = excluded.assignee"
     );
     for (const item of INITIAL_SCHEDULE) {
-      insertSched.run(item.dayOfWeek, item.areaId, item.assignee);
+      upsertSched.run(item.dayOfWeek, item.areaId, item.assignee);
     }
   }
 
@@ -241,6 +247,32 @@ export function getOrCreateDailyData(dateStr: string): DailyData {
     }
 
     assignRows = assignStmt.all(dateStr) as unknown as { area_id: number; assignee: string }[];
+  } else if (
+    !Boolean(reportRow?.is_sent) &&
+    assignRows.some(
+      (a) =>
+        a.assignee === "Zaid" ||
+        a.assignee === "Ahmad" ||
+        a.assignee === "Bilal" ||
+        a.assignee.includes("Andi")
+    )
+  ) {
+    // Refresh legacy placeholder assignments with official schedule
+    const weeklyStmt = db.prepare(
+      "SELECT area_id, assignee FROM weekly_schedule WHERE day_of_week = ?"
+    );
+    const weeklyRows = weeklyStmt.all(dayOfWeek) as unknown as { area_id: number; assignee: string }[];
+    const updateAssign = db.prepare(
+      "INSERT INTO daily_assignments (date, area_id, assignee) VALUES (?, ?, ?) ON CONFLICT(date, area_id) DO UPDATE SET assignee = excluded.assignee"
+    );
+
+    for (const area of areas) {
+      const match = weeklyRows.find((w) => w.area_id === area.id);
+      if (match) {
+        updateAssign.run(dateStr, area.id, match.assignee);
+      }
+    }
+    assignRows = assignStmt.all(dateStr) as unknown as { area_id: number; assignee: string }[];
   }
 
   // 3. Ensure daily_task_checks exist
@@ -293,17 +325,85 @@ export function getOrCreateDailyData(dateStr: string): DailyData {
   };
 }
 
-export function toggleTaskCheck(dateStr: string, taskId: number, completed: boolean): void {
+export const TASK_STRING_TO_NUMERIC_ID: Record<string, number> = {
+  "dapur-1": 1,
+  "dapur-2": 2,
+  "dapur-3": 3,
+  "dapur-4": 4,
+  "dapur-5": 5,
+  "dapur-6": 6,
+  "lobby-1": 7,
+  "lobby-2": 8,
+  "lobby-3": 9,
+  "lobby-4": 10,
+  "lobby-5": 11,
+  "lobby-6": 12,
+  "lobby-7": 13,
+  "lobby-8": 14,
+  "musala-1": 15,
+  "musala-2": 16,
+  "musala-3": 17,
+  "musala-4": 18,
+  "musala-5": 19,
+  "musala-6": 20,
+  "musala-7": 21,
+};
+
+export const TASK_NUMERIC_TO_STRING_ID: Record<number, string> = {
+  1: "dapur-1",
+  2: "dapur-2",
+  3: "dapur-3",
+  4: "dapur-4",
+  5: "dapur-5",
+  6: "dapur-6",
+  7: "lobby-1",
+  8: "lobby-2",
+  9: "lobby-3",
+  10: "lobby-4",
+  11: "lobby-5",
+  12: "lobby-6",
+  13: "lobby-7",
+  14: "lobby-8",
+  15: "musala-1",
+  16: "musala-2",
+  17: "musala-3",
+  18: "musala-4",
+  19: "musala-5",
+  20: "musala-6",
+  21: "musala-7",
+};
+
+export function isReportLocked(dateStr: string): boolean {
   const db = getDb();
+  const stmt = db.prepare("SELECT is_sent FROM daily_reports WHERE date = ?");
+  const row = stmt.get(dateStr) as { is_sent: number } | undefined;
+  return Boolean(row?.is_sent === 1);
+}
+
+export function toggleTaskCheck(dateStr: string, taskId: number | string, completed: boolean): void {
+  const db = getDb();
+  if (isReportLocked(dateStr)) {
+    throw new Error("Laporan untuk tanggal ini sudah terkirim ke WhatsApp dan terkunci.");
+  }
+
+  const numericId =
+    typeof taskId === "string"
+      ? TASK_STRING_TO_NUMERIC_ID[taskId] || parseInt(taskId.replace(/\D/g, ""), 10) || 1
+      : taskId;
+
   db.prepare(`
     INSERT INTO daily_task_checks (date, task_id, completed)
     VALUES (?, ?, ?)
     ON CONFLICT(date, task_id) DO UPDATE SET completed = excluded.completed
-  `).run(dateStr, taskId, completed ? 1 : 0);
+  `).run(dateStr, numericId, completed ? 1 : 0);
 }
 
 export function checkAllTasks(dateStr: string, areaId: number, completed: boolean): void {
   const db = getDb();
+  if (isReportLocked(dateStr)) {
+    throw new Error("Laporan untuk tanggal ini sudah terkirim ke WhatsApp dan terkunci.");
+  }
+
   // Ensure daily data is initialized
   getOrCreateDailyData(dateStr);
 
@@ -323,6 +423,10 @@ export function checkAllTasks(dateStr: string, areaId: number, completed: boolea
 
 export function updateDailyAssignee(dateStr: string, areaId: number, assignee: string): void {
   const db = getDb();
+  if (isReportLocked(dateStr)) {
+    throw new Error("Laporan untuk tanggal ini sudah terkirim ke WhatsApp dan terkunci.");
+  }
+
   // Ensure daily report is initialized
   getOrCreateDailyData(dateStr);
 

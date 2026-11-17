@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { AreaCard, TaskState, AssigneeItem } from "@/components/AreaCard";
 import { EditAssigneeModal } from "@/components/EditAssigneeModal";
@@ -17,7 +17,7 @@ import {
   formatSantriNames,
   transferSantri,
 } from "@/lib/schedule";
-import { Copy, Check, Minus, Send, Calendar } from "lucide-react";
+import { Copy, Check, Minus, Send, Calendar, Lock } from "lucide-react";
 
 interface DayItem {
   index: number;
@@ -34,6 +34,21 @@ const DAYS_LIST: DayItem[] = [
   { index: 6, name: "Sabtu", shortName: "SAB" },
   { index: 0, name: "Minggu", shortName: "MIN" },
 ];
+
+/**
+ * Menghitung tanggal ISO (YYYY-MM-DD) untuk hari yang dipilih dalam minggu berjalan.
+ */
+function getTargetDateStr(dayIndex: number, referenceDateStr: string): string {
+  if (!referenceDateStr) return "";
+  const [year, month, day] = referenceDateStr.split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day));
+  const curJsDay = d.getUTCDay();
+  const curMonBased = curJsDay === 0 ? 7 : curJsDay;
+  const targetMonBased = dayIndex === 0 ? 7 : dayIndex;
+  const diff = targetMonBased - curMonBased;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d.toISOString().split("T")[0];
+}
 
 export default function HomePage() {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(1);
@@ -62,6 +77,9 @@ export default function HomePage() {
   // Checklist state: { [taskId]: boolean }
   const [taskChecks, setTaskChecks] = useState<Record<string, boolean>>({});
 
+  // WhatsApp lock state: if report is sent, checklist is locked from edits
+  const [isSent, setIsSent] = useState<boolean>(false);
+
   // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
@@ -80,6 +98,11 @@ export default function HomePage() {
     currentAssignee: "",
   });
 
+  // Target date string for the selected day in this week
+  const activeDateString = useMemo(() => {
+    return getTargetDateStr(selectedDayIndex, dateInfo.dateString);
+  }, [selectedDayIndex, dateInfo.dateString]);
+
   // 1. Initialize today's date in WIB
   useEffect(() => {
     const jakarta = getJakartaDate();
@@ -89,30 +112,9 @@ export default function HomePage() {
       dateString: jakarta.dateString,
     });
     setSelectedDayIndex(jakarta.dayIndex);
-
-    // Initialize roster for today
-    const schedule = FIXED_DAILY_SCHEDULE[jakarta.dayIndex] || {
-      dapur: "Akyas",
-      lobby: "Hisyam, Ega & Evan",
-      musala: "Yasir & Hanif",
-    };
-    setDayRoster({
-      dapur: parseSantriNames(schedule.dapur),
-      lobby: parseSantriNames(schedule.lobby),
-    });
-
-    // Load saved checks for today from localStorage
-    try {
-      const savedChecks = localStorage.getItem(`piket_checks_${jakarta.dateString}`);
-      if (savedChecks) {
-        setTaskChecks(JSON.parse(savedChecks));
-      }
-    } catch {
-      // ignore
-    }
   }, []);
 
-  // 2. Active schedule for the selected day
+  // 2. Active schedule default for the selected day
   const defaultSchedule = useMemo(() => {
     return (
       FIXED_DAILY_SCHEDULE[selectedDayIndex] || {
@@ -142,6 +144,66 @@ export default function HomePage() {
     );
   }, [dayRoster, defaultDapurList, defaultLobbyList, customMusalaAssignee]);
 
+  // Fetch daily data from database whenever active date changes
+  const loadDailyData = useCallback(
+    async (dateStr: string, dayIdx: number) => {
+      if (!dateStr) return;
+      try {
+        const res = await fetch(`/api/daily?date=${dateStr}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Update locked status
+        setIsSent(Boolean(data.isSent));
+
+        // Update task checks
+        if (data.taskChecks) {
+          setTaskChecks(data.taskChecks);
+        } else {
+          setTaskChecks({});
+        }
+
+        // Update roster from DB if available and has valid names
+        if (
+          data.dayRoster?.dapur &&
+          data.dayRoster.dapur.length > 0 &&
+          !data.dayRoster.dapur.includes("Petugas")
+        ) {
+          setDayRoster({
+            dapur: data.dayRoster.dapur,
+            lobby: data.dayRoster.lobby || [],
+          });
+        } else {
+          const schedule = FIXED_DAILY_SCHEDULE[dayIdx] || {
+            dapur: "Petugas Dapur",
+            lobby: "Petugas Lobby",
+            musala: "Petugas Musala",
+          };
+          setDayRoster({
+            dapur: parseSantriNames(schedule.dapur),
+            lobby: parseSantriNames(schedule.lobby),
+          });
+        }
+
+        if (data.customMusalaAssignee) {
+          setCustomMusalaAssignee(data.customMusalaAssignee);
+        } else {
+          setCustomMusalaAssignee(null);
+        }
+      } catch (err) {
+        console.error("Gagal memuat data dari database:", err);
+      }
+    },
+    []
+  );
+
+  // Effect to load data when activeDateString is available
+  useEffect(() => {
+    if (activeDateString) {
+      loadDailyData(activeDateString, selectedDayIndex);
+    }
+  }, [activeDateString, selectedDayIndex, loadDailyData]);
+
   // Determine effective assignee per area
   const getAssigneeForArea = (areaId: number): string => {
     if (areaId === 1) return formatSantriNames(dayRoster.dapur);
@@ -150,128 +212,300 @@ export default function HomePage() {
     return "";
   };
 
-  // Reset custom assignees when user switches day
+  // Day switch handler
   const handleSelectDay = (dayIndex: number) => {
     setSelectedDayIndex(dayIndex);
-    const schedule = FIXED_DAILY_SCHEDULE[dayIndex] || {
-      dapur: "Petugas Dapur",
-      lobby: "Petugas Lobby",
-      musala: "Petugas Musala",
-    };
-    setDayRoster({
-      dapur: parseSantriNames(schedule.dapur),
-      lobby: parseSantriNames(schedule.lobby),
-    });
-    setCustomMusalaAssignee(null);
   };
 
   // 1-Tap Move Santri between Dapur and Asrama
-  const handleAddHelper = (name: string, toArea: 1 | 2) => {
-    setDayRoster((prev) => {
-      const updated = transferSantri(prev, name, toArea === 1 ? "dapur" : "lobby");
-      setToastMessage(
-        toArea === 1
-          ? `${name} pindah membantu di Dapur`
-          : `${name} pindah membantu di Asrama`
-      );
-      setToastType("success");
-      return updated;
-    });
+  const handleAddHelper = async (name: string, toArea: 1 | 2) => {
+    if (isSent) {
+      setToastMessage("Laporan sudah terkunci dan tidak dapat diubah.");
+      setToastType("error");
+      return;
+    }
+
+    const updated = transferSantri(dayRoster, name, toArea === 1 ? "dapur" : "lobby");
+    setDayRoster(updated);
+
+    setToastMessage(
+      toArea === 1
+        ? `${name} pindah membantu di Dapur`
+        : `${name} pindah membantu di Asrama`
+    );
+    setToastType("success");
+
+    // Persist to database
+    if (activeDateString) {
+      try {
+        const res = await fetch("/api/daily/assignee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            roster: {
+              dapur: updated.dapur,
+              lobby: updated.lobby,
+            },
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          if (res.status === 403) {
+            setIsSent(true);
+            setToastMessage("Laporan sudah terkirim ke WhatsApp dan terkunci.");
+            setToastType("error");
+            loadDailyData(activeDateString, selectedDayIndex);
+          } else {
+            console.error("Failed to save roster:", errData.error);
+          }
+        }
+      } catch (e) {
+        console.error("Error saving roster:", e);
+      }
+    }
   };
 
-  const handleRemoveHelper = (name: string, fromArea: 1 | 2) => {
-    setDayRoster((prev) => {
-      const updated = transferSantri(prev, name, fromArea === 1 ? "lobby" : "dapur");
-      setToastMessage(
-        fromArea === 1
-          ? `${name} dikembalikan ke Asrama`
-          : `${name} dikembalikan ke Dapur`
-      );
-      setToastType("success");
-      return updated;
-    });
+  const handleRemoveHelper = async (name: string, fromArea: 1 | 2) => {
+    if (isSent) {
+      setToastMessage("Laporan sudah terkunci dan tidak dapat diubah.");
+      setToastType("error");
+      return;
+    }
+
+    const updated = transferSantri(dayRoster, name, fromArea === 1 ? "lobby" : "dapur");
+    setDayRoster(updated);
+
+    setToastMessage(
+      fromArea === 1
+        ? `${name} dikembalikan ke Asrama`
+        : `${name} dikembalikan ke Dapur`
+    );
+    setToastType("success");
+
+    // Persist to database
+    if (activeDateString) {
+      try {
+        const res = await fetch("/api/daily/assignee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            roster: {
+              dapur: updated.dapur,
+              lobby: updated.lobby,
+            },
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          if (res.status === 403) {
+            setIsSent(true);
+            setToastMessage("Laporan sudah terkirim ke WhatsApp dan terkunci.");
+            setToastType("error");
+            loadDailyData(activeDateString, selectedDayIndex);
+          } else {
+            console.error("Failed to save roster:", errData.error);
+          }
+        }
+      } catch (e) {
+        console.error("Error saving roster:", e);
+      }
+    }
   };
 
-  const handleResetRoster = () => {
-    setDayRoster({
+  const handleResetRoster = async () => {
+    if (isSent) {
+      setToastMessage("Laporan sudah terkunci dan tidak dapat diubah.");
+      setToastType("error");
+      return;
+    }
+
+    const resetRoster = {
       dapur: [...defaultDapurList],
       lobby: [...defaultLobbyList],
-    });
+    };
+    setDayRoster(resetRoster);
     setCustomMusalaAssignee(null);
     setToastMessage("Jadwal petugas dikembalikan ke jadwal resmi");
     setToastType("success");
+
+    if (activeDateString) {
+      try {
+        await fetch("/api/daily/assignee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            roster: {
+              dapur: resetRoster.dapur,
+              lobby: resetRoster.lobby,
+              musala: defaultSchedule.musala,
+            },
+          }),
+        });
+      } catch (e) {
+        console.error("Error resetting roster:", e);
+      }
+    }
   };
 
   // Toggle single task check
-  const handleToggleTask = (taskId: string) => {
-    setTaskChecks((prev) => {
-      const updated = { ...prev, [taskId]: !prev[taskId] };
-      if (dateInfo.dateString) {
-        try {
-          localStorage.setItem(`piket_checks_${dateInfo.dateString}`, JSON.stringify(updated));
-        } catch {
-          // ignore
+  const handleToggleTask = async (taskId: string) => {
+    if (isSent) {
+      setToastMessage("Ceklist terkunci karena laporan sudah terkirim ke WhatsApp.");
+      setToastType("error");
+      return;
+    }
+
+    const nextState = !taskChecks[taskId];
+    setTaskChecks((prev) => ({ ...prev, [taskId]: nextState }));
+
+    if (activeDateString) {
+      try {
+        const res = await fetch("/api/daily/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            taskId,
+            completed: nextState,
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          if (res.status === 403) {
+            setIsSent(true);
+            setToastMessage("Ceklist terkunci karena laporan sudah terkirim.");
+            setToastType("error");
+            loadDailyData(activeDateString, selectedDayIndex);
+          }
         }
+      } catch (e) {
+        console.error("Error updating check:", e);
       }
-      return updated;
-    });
+    }
   };
 
   // Check all tasks in an area
-  const handleCheckAllArea = (area: AreaDefinition, completed: boolean) => {
+  const handleCheckAllArea = async (area: AreaDefinition, completed: boolean) => {
+    if (isSent) {
+      setToastMessage("Ceklist terkunci karena laporan sudah terkirim ke WhatsApp.");
+      setToastType("error");
+      return;
+    }
+
     setTaskChecks((prev) => {
       const updated = { ...prev };
       area.tasks.forEach((t) => {
         updated[t.id] = completed;
       });
-      if (dateInfo.dateString) {
-        try {
-          localStorage.setItem(`piket_checks_${dateInfo.dateString}`, JSON.stringify(updated));
-        } catch {
-          // ignore
-        }
-      }
       return updated;
     });
+
+    if (activeDateString) {
+      try {
+        const res = await fetch("/api/daily/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            areaId: area.id,
+            checkAll: true,
+            completed,
+          }),
+        });
+        if (!res.ok && res.status === 403) {
+          setIsSent(true);
+          setToastMessage("Ceklist terkunci karena laporan sudah terkirim.");
+          setToastType("error");
+          loadDailyData(activeDateString, selectedDayIndex);
+        }
+      } catch (e) {
+        console.error("Error checking all in area:", e);
+      }
+    }
   };
 
   // Check all tasks globally
-  const handleCheckAllGlobal = (completed: boolean) => {
-    setTaskChecks((prev) => {
-      const updated = { ...prev };
-      DEFAULT_PIKET_AREAS.forEach((area) => {
-        area.tasks.forEach((t) => {
-          updated[t.id] = completed;
-        });
+  const handleCheckAllGlobal = async (completed: boolean) => {
+    if (isSent) {
+      setToastMessage("Ceklist terkunci karena laporan sudah terkirim ke WhatsApp.");
+      setToastType("error");
+      return;
+    }
+
+    const updated: Record<string, boolean> = { ...taskChecks };
+    DEFAULT_PIKET_AREAS.forEach((area) => {
+      area.tasks.forEach((t) => {
+        updated[t.id] = completed;
       });
-      if (dateInfo.dateString) {
-        try {
-          localStorage.setItem(`piket_checks_${dateInfo.dateString}`, JSON.stringify(updated));
-        } catch {
-          // ignore
-        }
-      }
-      return updated;
     });
+    setTaskChecks(updated);
+
+    if (activeDateString) {
+      try {
+        const res = await fetch("/api/daily/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            checks: updated,
+          }),
+        });
+        if (!res.ok && res.status === 403) {
+          setIsSent(true);
+          setToastMessage("Ceklist terkunci karena laporan sudah terkirim.");
+          setToastType("error");
+          loadDailyData(activeDateString, selectedDayIndex);
+        }
+      } catch (e) {
+        console.error("Error checking all globally:", e);
+      }
+    }
   };
 
   // Save modified assignee from manual modal
-  const handleSaveAssignee = (newAssignee: string) => {
-    if (editModal.areaNumber === 1) {
+  const handleSaveAssignee = async (newAssignee: string) => {
+    if (isSent) {
+      setToastMessage("Laporan sudah terkunci dan tidak dapat diubah.");
+      setToastType("error");
+      return;
+    }
+
+    const targetArea = editModal.areaNumber;
+    if (targetArea === 1) {
       setDayRoster((prev) => ({
         ...prev,
         dapur: parseSantriNames(newAssignee),
       }));
-    } else if (editModal.areaNumber === 2) {
+    } else if (targetArea === 2) {
       setDayRoster((prev) => ({
         ...prev,
         lobby: parseSantriNames(newAssignee),
       }));
-    } else if (editModal.areaNumber === 3) {
+    } else if (targetArea === 3) {
       setCustomMusalaAssignee(newAssignee);
     }
-    setToastMessage(`Petugas Area ${editModal.areaNumber} diperbarui`);
+
+    setToastMessage(`Petugas Area ${targetArea} diperbarui`);
     setToastType("success");
+
+    if (activeDateString) {
+      try {
+        await fetch("/api/daily/assignee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            areaId: targetArea,
+            assignee: newAssignee,
+          }),
+        });
+      } catch (e) {
+        console.error("Error saving manual assignee:", e);
+      }
+    }
   };
 
   // Build formatted report string
@@ -289,17 +523,37 @@ export default function HomePage() {
     return formatDailyReport(areasReportData);
   }, [dayRoster, defaultSchedule, customMusalaAssignee, taskChecks]);
 
-  // Redirection to WhatsApp
+  // Send to WhatsApp & Lock in Database
   const handleSendToWhatsApp = async () => {
+    // 1. Copy report text to clipboard
     await copyToClipboard(formattedReport);
+
+    // 2. Lock the report in database
+    if (activeDateString) {
+      try {
+        await fetch("/api/daily/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: activeDateString,
+            isSent: true,
+          }),
+        });
+        setIsSent(true);
+      } catch (e) {
+        console.error("Error setting report sent status:", e);
+      }
+    }
+
+    // 3. Open WhatsApp
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedReport)}`;
     window.open(waUrl, "_blank");
 
-    setToastMessage("Laporan disalin. Membuka WhatsApp...");
+    setToastMessage("Laporan disalin & ceklist terkunci. Membuka WhatsApp...");
     setToastType("success");
   };
 
-  // Copy report only
+  // Copy report only (always functional, even when locked!)
   const handleCopyOnly = async () => {
     const success = await copyToClipboard(formattedReport);
     if (success) {
@@ -335,6 +589,28 @@ export default function HomePage() {
         {/* Compact PWA Install Banner */}
         <InstallPrompt />
 
+        {/* Lock Banner when report has been sent to WhatsApp */}
+        {isSent && (
+          <div className="bg-emerald-50 border border-emerald-200/90 rounded-2xl p-3.5 flex items-start gap-3 shadow-2xs animate-in fade-in duration-200">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="text-xs font-bold text-emerald-950">
+                  Laporan Terkirim ke WhatsApp (Terkunci)
+                </h3>
+                <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-200/60 text-emerald-900 rounded-full">
+                  Final
+                </span>
+              </div>
+              <p className="text-[11px] text-emerald-800 leading-relaxed mt-0.5">
+                Ceklist dan petugas untuk hari ini sudah terkirim ke grup dan tidak dapat diubah lagi. Anda tetap dapat menyalin teks laporan menggunakan tombol di bawah.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Day Selector (Artisanal Calendar Strip in Royal Blue) */}
         <div className="bg-white rounded-2xl border border-slate-200/90 p-3 space-y-2.5 shadow-2xs">
           <div className="flex items-center justify-between px-1 text-xs">
@@ -343,7 +619,7 @@ export default function HomePage() {
               <span className="text-slate-600 font-medium">Jadwal:</span>
               <span className="font-bold text-blue-950">{selectedDayName}</span>
               {isSelectedToday && (
-                <span className="text-[10px] font-semibold px-2 py-0.5  text-slate-400 rounded-full">
+                <span className="text-[10px] font-semibold px-2 py-0.5 text-slate-400 rounded-full">
                   Hari Ini
                 </span>
               )}
@@ -351,10 +627,25 @@ export default function HomePage() {
             {/* Global Check All Checkbox Button (Icon Only - Anti-Slop) */}
             <button
               type="button"
-              onClick={() => handleCheckAllGlobal(!allGlobalCompleted)}
-              className="p-1 text-slate-500 hover:text-blue-700 hover:bg-blue-100/60 active:bg-blue-200/60 rounded-lg transition-colors touch-target flex items-center justify-center"
-              title={allGlobalCompleted ? "Batalkan semua tugas hari ini" : "Centang semua tugas hari ini"}
-              aria-label={allGlobalCompleted ? "Batalkan semua tugas hari ini" : "Centang semua tugas hari ini"}
+              disabled={isSent}
+              onClick={() => !isSent && handleCheckAllGlobal(!allGlobalCompleted)}
+              className={`p-1 rounded-lg transition-colors touch-target flex items-center justify-center ${
+                isSent
+                  ? "opacity-50 cursor-not-allowed text-slate-400"
+                  : "text-slate-500 hover:text-blue-700 hover:bg-blue-100/60 active:bg-blue-200/60"
+              }`}
+              title={
+                isSent
+                  ? "Ceklist terkunci (laporan sudah dikirim)"
+                  : allGlobalCompleted
+                  ? "Batalkan semua tugas hari ini"
+                  : "Centang semua tugas hari ini"
+              }
+              aria-label={
+                allGlobalCompleted
+                  ? "Batalkan semua tugas hari ini"
+                  : "Centang semua tugas hari ini"
+              }
             >
               <div
                 className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${
@@ -431,10 +722,10 @@ export default function HomePage() {
                   name,
                   isGuest: !defaultDapurList.includes(name), // true if transferred from Asrama
                 }));
-                // If a guest (e.g. Hisyam) is in Dapur, onReturnPerson returns him to Asrama
+                // If a guest (e.g. Hisyam or Evan) is in Dapur, onReturnPerson returns him to Asrama
                 onReturnPerson = (name: string) => handleRemoveHelper(name, 1);
 
-                // Default santri in Dapur (e.g. Gabrial) can also transfer to help Asrama
+                // Default santri in Dapur (e.g. Gabrial or Akyas) can also transfer to help Asrama
                 canTransferToOtherArea = true;
                 transferActionLabel = "Bantu Asrama";
                 onTransferPerson = (name: string) => handleAddHelper(name, 2);
@@ -468,6 +759,7 @@ export default function HomePage() {
                 onResetAssignee={handleResetRoster}
                 isModified={isRosterModified}
                 isFixedSchedule={area.id === 3}
+                isLocked={isSent}
                 tasks={areaTasks}
                 onToggleTask={handleToggleTask}
                 onCheckAll={(completed) => handleCheckAllArea(area, completed)}
@@ -501,12 +793,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons: "Salin Teks" always functional, WhatsApp button triggers lock and opens WhatsApp */}
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyOnly}
               className="py-3 px-4 rounded-xl font-bold text-xs bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-900 border border-blue-200/80 transition-colors flex items-center justify-center gap-1.5 shrink-0 touch-target"
-              title="Salin format laporan ke clipboard"
+              title="Salin format laporan ke clipboard (selalu aktif)"
             >
               {copiedRecently ? (
                 <>
@@ -523,10 +815,14 @@ export default function HomePage() {
 
             <button
               onClick={handleSendToWhatsApp}
-              className="flex-1 py-3 px-5 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs transition-all flex items-center justify-center gap-2 touch-target"
+              className={`flex-1 py-3 px-5 rounded-xl font-bold text-sm text-white shadow-xs transition-all flex items-center justify-center gap-2 touch-target ${
+                isSent
+                  ? "bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900"
+                  : "bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800"
+              }`}
             >
               <Send className="w-4 h-4 stroke-[2.5]" />
-              <span>Kirim ke WhatsApp</span>
+              <span>{isSent ? "Buka di WhatsApp" : "Kirim ke WhatsApp"}</span>
             </button>
           </div>
         </div>

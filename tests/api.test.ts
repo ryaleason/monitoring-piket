@@ -111,6 +111,71 @@ describe("API Routes", () => {
     expect(dailyData.isSent).toBe(true);
   });
 
+  it("POST /api/daily/assignee supports roster object persistence", async () => {
+    const req = new Request("http://localhost/api/daily/assignee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: "2026-11-17",
+        roster: {
+          dapur: ["Akyas", "Evan"],
+          lobby: ["Hisyam", "Ega"],
+        },
+      }),
+    });
+    const res = await postAssignee(req);
+    expect(res.status).toBe(200);
+
+    const getReq = new Request("http://localhost/api/daily?date=2026-11-17");
+    const dailyRes = await getDaily(getReq);
+    const dailyData = await dailyRes.json();
+    expect(dailyData.areas[0].assigneeText).toBe("Akyas & Evan");
+    expect(dailyData.areas[1].assigneeText).toBe("Hisyam & Ega");
+    expect(dailyData.dayRoster.dapur).toEqual(["Akyas", "Evan"]);
+    expect(dailyData.dayRoster.lobby).toEqual(["Hisyam", "Ega"]);
+  });
+
+  it("rejection with 403 when modifying locked report (isSent=true)", async () => {
+    const date = "2026-11-18";
+    // First lock the report
+    const lockReq = new Request("http://localhost/api/daily/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, isSent: true }),
+    });
+    await postStatus(lockReq);
+
+    // Attempt to toggle check
+    const checkReq = new Request("http://localhost/api/daily/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date,
+        taskId: "dapur-1",
+        completed: true,
+      }),
+    });
+    const checkRes = await postCheck(checkReq);
+    expect(checkRes.status).toBe(403);
+    const checkErr = await checkRes.json();
+    expect(checkErr.error).toContain("terkunci");
+
+    // Attempt to update assignee
+    const assignReq = new Request("http://localhost/api/daily/assignee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date,
+        areaId: 1,
+        assignee: "Siapapun",
+      }),
+    });
+    const assignRes = await postAssignee(assignReq);
+    expect(assignRes.status).toBe(403);
+    const assignErr = await assignRes.json();
+    expect(assignErr.error).toContain("terkunci");
+  });
+
   it("POST /api/admin/auth validates PIN correctly", async () => {
     // Default PIN is 1234
     const validReq = new Request("http://localhost/api/admin/auth", {
