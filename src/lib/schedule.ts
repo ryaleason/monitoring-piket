@@ -19,7 +19,7 @@ export const FIXED_DAILY_SCHEDULE: Record<number, DayPiketSchedule> = {
   // 2: Selasa
   2: {
     dapur: "Akyas",
-    lobby: "Andi & Ega",
+    lobby: "Hisyam, Ega & Evan",
     musala: "Yasir & Hanif",
   },
   // 3: Rabu
@@ -32,12 +32,12 @@ export const FIXED_DAILY_SCHEDULE: Record<number, DayPiketSchedule> = {
   4: {
     dapur: "Arman",
     lobby: "Ashlah & Rakha",
-    musala: "Akyas & Andi",
+    musala: "Akyas & Hisyam",
   },
   // 5: Jumat
   5: {
     dapur: "Gabrial",
-    lobby: "Akyas & Andi",
+    lobby: "Akyas & Hisyam",
     musala: "Yasir & Hanif",
   },
   // 6: Sabtu
@@ -56,7 +56,7 @@ export const FIXED_DAILY_SCHEDULE: Record<number, DayPiketSchedule> = {
 
 /**
  * Memecah string daftar nama santri menjadi array nama.
- * Contoh: "Andi & Ega" -> ["Andi", "Ega"]
+ * Contoh: "Hisyam & Ega" -> ["Hisyam", "Ega"]
  *         "Gabrial, Izal & Arman" -> ["Gabrial", "Izal", "Arman"]
  */
 export function parseSantriNames(text: string): string[] {
@@ -71,8 +71,8 @@ export function parseSantriNames(text: string): string[] {
 /**
  * Menggabungkan array nama santri menjadi format bahasa Indonesia natural.
  * Contoh: ["Akyas"] -> "Akyas"
- *         ["Akyas", "Andi"] -> "Akyas & Andi"
- *         ["Akyas", "Andi", "Ega"] -> "Akyas, Andi & Ega"
+ *         ["Akyas", "Hisyam"] -> "Akyas & Hisyam"
+ *         ["Akyas", "Hisyam", "Ega"] -> "Akyas, Hisyam & Ega"
  */
 export function formatSantriNames(names: string[]): string {
   if (!names || names.length === 0) return "Belum ditentukan";

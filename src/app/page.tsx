@@ -53,7 +53,7 @@ export default function HomePage() {
     lobby: string[];
   }>({
     dapur: ["Akyas"],
-    lobby: ["Andi", "Ega"],
+    lobby: ["Hisyam", "Ega", "Evan"],
   });
 
   // Optional manual override for Musala (Area 3 is fixed by default)
@@ -93,7 +93,7 @@ export default function HomePage() {
     // Initialize roster for today
     const schedule = FIXED_DAILY_SCHEDULE[jakarta.dayIndex] || {
       dapur: "Akyas",
-      lobby: "Andi & Ega",
+      lobby: "Hisyam, Ega & Evan",
       musala: "Yasir & Hanif",
     };
     setDayRoster({
@@ -431,7 +431,7 @@ export default function HomePage() {
                   name,
                   isGuest: !defaultDapurList.includes(name), // true if transferred from Asrama
                 }));
-                // If a guest (e.g. Andi) is in Dapur, onReturnPerson returns him to Asrama
+                // If a guest (e.g. Hisyam) is in Dapur, onReturnPerson returns him to Asrama
                 onReturnPerson = (name: string) => handleRemoveHelper(name, 1);
 
                 // Default santri in Dapur (e.g. Gabrial) can also transfer to help Asrama
@@ -444,7 +444,7 @@ export default function HomePage() {
                   name,
                   isGuest: !defaultLobbyList.includes(name), // true if transferred from Dapur
                 }));
-                // Default santri in Asrama (e.g. Andi, Ega) have "Bantu Dapur" button!
+                // Default santri in Asrama (e.g. Hisyam, Ega, Evan) have "Bantu Dapur" button!
                 canTransferToOtherArea = true;
                 transferActionLabel = "Bantu Dapur";
                 onTransferPerson = (name: string) => handleAddHelper(name, 1);
